@@ -1,5 +1,6 @@
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import AddCategory from "../../pages/categories/AddCategory";
+import ClientsPage from "../../pages/clients/ClientsPage";
 import HomePage from "../../pages/home/HomePage";
 import AddProduct from "../../pages/products/AddProduct";
 import CategoryPage from "../../pages/categories/CategoryPage";
@@ -41,6 +42,7 @@ export function AppRouter() {
               <Route path="add" element={<AddProduct />} />
               <Route path="edit/:productId" element={<EditProduct />} />
             </Route>
+            <Route path="/clients" element={<ClientsPage />} />
           </Route>
         </Route>
         <Route

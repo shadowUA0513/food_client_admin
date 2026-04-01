@@ -39,7 +39,6 @@ export default function AddStaff() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const companyId = useAuthStore((state) => state.company?.id);
-  const company = useAuthStore((state) => state);
   const queryClient = useQueryClient();
   const createStaffMutation = useCreateStaffUser();
   const [errors, setErrors] = useState<FormErrors>({});

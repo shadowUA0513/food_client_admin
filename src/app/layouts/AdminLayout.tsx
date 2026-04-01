@@ -22,6 +22,7 @@ import {
   IconLogout,
   IconMoon,
   IconSun,
+  IconUsers,
 } from "@tabler/icons-react";
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
@@ -41,6 +42,7 @@ export function AdminLayout() {
     { label: t("common.staff"), icon: IconBriefcase, to: "/staff" },
     { label: t("companyDetails.category"), icon: IconLayoutDashboard, to: "/category" },
     { label: t("companyDetails.product"), icon: IconLayoutDashboard, to: "/product" },
+    { label: "Clients", icon: IconUsers, to: "/clients" },
   ];
 
   const handleLogout = () => {

@@ -13,6 +13,7 @@ import {
 import { useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState, type FormEvent } from "react";
 import { useTranslation } from "react-i18next";
+import { useAuthStore } from "../../store/auth";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { PhoneNumberInput } from "../../components/common/PhoneNumberInput";
 import { useStaffUserById, useUpdateStaffUser } from "../../service/staff";
@@ -40,6 +41,7 @@ export default function EditStaff() {
   const { t } = useTranslation();
   const location = useLocation();
   const navigate = useNavigate();
+  const companyId = useAuthStore((state) => state.company?.id);
   const { staffId } = useParams();
   const queryClient = useQueryClient();
   const updateStaffMutation = useUpdateStaffUser();
@@ -117,12 +119,13 @@ export default function EditStaff() {
       full_name: form.full_name,
       phone_number: form.phone_number,
       role: form.role,
+      company_id: companyId,
       ...(password ? { password } : {}),
     };
 
     try {
       await updateStaffMutation.mutateAsync({ id: staffId, payload });
-      await queryClient.invalidateQueries({ queryKey: ["staff-users"] });
+      await queryClient.invalidateQueries({ queryKey: ["staff-users", companyId] });
       await queryClient.invalidateQueries({ queryKey: ["staff-user", staffId] });
       showSuccessNotification({
         message: "Staff member updated successfully.",

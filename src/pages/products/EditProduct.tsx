@@ -20,6 +20,7 @@ import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { useCategories } from "../../service/categories";
 import { uploadImage } from "../../service/images";
 import { useProductById, useUpdateProduct } from "../../service/products";
+import { useAuthStore } from "../../store/auth";
 import type { Product, UpdateProductPayload } from "../../types/products";
 import {
   showErrorNotification,
@@ -50,7 +51,8 @@ const EMPTY_FORM: UpdateProductPayload = {
 
 export default function EditProduct() {
   const { t } = useTranslation();
-  const { companyId, productId } = useParams();
+  const { productId } = useParams();
+  const companyId = useAuthStore((state) => state.company?.id);
   const navigate = useNavigate();
   const location = useLocation();
   const queryClient = useQueryClient();
@@ -95,7 +97,7 @@ export default function EditProduct() {
 
   const handleClose = () => {
     setErrors({});
-    navigate(`/companies/${companyId}/product`);
+    navigate("/product");
   };
 
   const handleImageFileChange = async (file: File | null) => {

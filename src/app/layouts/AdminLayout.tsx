@@ -18,7 +18,6 @@ import {
 import { useDisclosure } from "@mantine/hooks";
 import {
   IconBriefcase,
-  IconBuildingStore,
   IconLayoutDashboard,
   IconLogout,
   IconMoon,
@@ -40,7 +39,8 @@ export function AdminLayout() {
   const navigationItems = [
     { label: t("common.dashboard"), icon: IconLayoutDashboard, to: "/" },
     { label: t("common.staff"), icon: IconBriefcase, to: "/staff" },
-    { label: t("common.companies"), icon: IconBuildingStore, to: "/companies" },
+    { label: t("companyDetails.category"), icon: IconLayoutDashboard, to: "/category" },
+    { label: t("companyDetails.product"), icon: IconLayoutDashboard, to: "/product" },
   ];
 
   const handleLogout = () => {
@@ -132,7 +132,11 @@ export function AdminLayout() {
                     key={item.to}
                     label={item.label}
                     leftSection={<Icon size={18} />}
-                    active={location.pathname === item.to}
+                    active={
+                      item.to === "/"
+                        ? location.pathname === "/"
+                        : location.pathname.startsWith(item.to)
+                    }
                     variant="filled"
                     color="orange"
                     component="button"

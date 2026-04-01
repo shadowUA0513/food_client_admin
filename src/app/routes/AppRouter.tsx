@@ -1,21 +1,21 @@
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
-import AddCategory from "../../pages/company-details/AddCategory";
-import AddProduct from "../../pages/company-details/AddProduct";
-import CompanyCategoryPage from "../../pages/company-details/CompanyCategoryPage";
-import CompanyDetailsPage from "../../pages/company-details/CompanyDetailsPage";
-import CompanyProductPage from "../../pages/company-details/CompanyProductPage";
-import EditCategory from "../../pages/company-details/EditCategory";
-import EditProduct from "../../pages/company-details/EditProduct";
+import AddCategory from "../../pages/categories/AddCategory";
+import HomePage from "../../pages/home/HomePage";
+import AddProduct from "../../pages/products/AddProduct";
+import CategoryPage from "../../pages/categories/CategoryPage";
+import ProductPage from "../../pages/products/ProductPage";
+import EditCategory from "../../pages/categories/EditCategory";
+import EditProduct from "../../pages/products/EditProduct";
 import LoginPage from "../../pages/login/LoginPage";
+import AddStaff from "../../pages/staff/AddStaff";
+import EditStaff from "../../pages/staff/EditStaff";
+import StaffPage from "../../pages/staff/StaffPage";
+import { AdminLayout } from "../layouts/AdminLayout";
 import { useAuth } from "../providers/AuthProvider";
 import { ProtectedRoute } from "./ProtectedRoute";
 
-const DEFAULT_COMPANY_ID =
-  import.meta.env.VITE_DEFAULT_COMPANY_ID?.trim() || "1";
-
 export function AppRouter() {
-  const { isAuthenticated, company } = useAuth();
-  const currentCompanyId = company?.id || DEFAULT_COMPANY_ID;
+  const { isAuthenticated } = useAuth();
 
   return (
     <BrowserRouter>
@@ -27,26 +27,21 @@ export function AppRouter() {
           }
         />
         <Route element={<ProtectedRoute isAllowed={isAuthenticated} />}>
-          <Route path="/companies/:companyId" element={<CompanyDetailsPage />}>
-            <Route index element={<Navigate to="category" replace />} />
-            <Route path="category" element={<CompanyCategoryPage />}>
-              <Route path="add-category" element={<AddCategory />} />
+          <Route element={<AdminLayout />}>
+            <Route path="/" element={<HomePage />} />
+            <Route path="/staff" element={<StaffPage />}>
+              <Route path="add" element={<AddStaff />} />
+              <Route path="edit/:staffId" element={<EditStaff />} />
+            </Route>
+            <Route path="/category" element={<CategoryPage />}>
+              <Route path="add" element={<AddCategory />} />
               <Route path="edit/:categoryId" element={<EditCategory />} />
             </Route>
-            <Route path="product" element={<CompanyProductPage />}>
-              <Route path="add-product" element={<AddProduct />} />
+            <Route path="/product" element={<ProductPage />}>
+              <Route path="add" element={<AddProduct />} />
               <Route path="edit/:productId" element={<EditProduct />} />
             </Route>
           </Route>
-          <Route
-            path="/"
-            element={
-              <Navigate
-                to={`/companies/${currentCompanyId}/category`}
-                replace
-              />
-            }
-          />
         </Route>
         <Route
           path="*"

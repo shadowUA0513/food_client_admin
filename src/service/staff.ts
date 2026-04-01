@@ -1,5 +1,6 @@
 import { AxiosError } from "axios";
 import { api } from "./api";
+import { useAuthStore } from "../store/auth";
 import type {
   CreateStaffPayload,
   StaffCreateResponse,
@@ -15,18 +16,31 @@ function getErrorMessage(error: unknown, fallback: string) {
   return axiosError.response?.data?.message ?? fallback;
 }
 
-export async function getStaffUsers() {
+function matchesCompany(member: StaffUser, companyId?: string) {
+  if (!companyId) {
+    return true;
+  }
+
+  return member.company?.id === companyId || member.company_id === companyId;
+}
+
+export async function getStaffUsers(companyId?: string) {
   try {
     const { data } = await api.get<StaffListResponse>("/api/v1/users");
-    return data.data?.users ?? [];
+
+    const users = data.data?.users ?? [];
+    return users.filter((member) => matchesCompany(member, companyId));
   } catch (error) {
     throw new Error(getErrorMessage(error, "Failed to load staff."));
   }
 }
 export const useStaffUsers = () => {
+  const companyId = useAuthStore((state) => state.company?.id);
+
   return useQuery({
-    queryKey: ["staff-users"],
-    queryFn: getStaffUsers,
+    queryKey: ["staff-users", companyId],
+    queryFn: () => getStaffUsers(companyId),
+    enabled: Boolean(companyId),
     refetchOnWindowFocus: false,
   });
 };
@@ -45,10 +59,19 @@ export const useStaffUserById = (id?: string) => {
         return undefined;
       }
 
-      const cachedStaff =
-        queryClient.getQueryData<StaffUser[]>(["staff-users"]) ?? [];
+      const cachedQueries = queryClient.getQueriesData<StaffUser[]>({
+        queryKey: ["staff-users"],
+      });
 
-      return cachedStaff.find((member) => member.id === id);
+      for (const [, members] of cachedQueries) {
+        const found = members?.find((member) => member.id === id);
+
+        if (found) {
+          return found;
+        }
+      }
+
+      return undefined;
     },
   });
 };
@@ -64,7 +87,12 @@ export async function getStaffUserById(id: string) {
 
 export async function createStaffUser(payload: CreateStaffPayload) {
   try {
-    const { data } = await api.post<StaffCreateResponse>("/api/v1/users", payload);
+    const companyId = payload.company_id || useAuthStore.getState().company?.id;
+    const requestPayload = companyId
+      ? { ...payload, company_id: companyId }
+      : payload;
+
+    const { data } = await api.post<StaffCreateResponse>("/api/v1/users", requestPayload);
     return data.user;
   } catch (error) {
     throw new Error(getErrorMessage(error, "Failed to create staff member."));
@@ -73,9 +101,14 @@ export async function createStaffUser(payload: CreateStaffPayload) {
 
 export async function updateStaffUser(id: string, payload: UpdateStaffPayload) {
   try {
+    const companyId = payload.company_id || useAuthStore.getState().company?.id;
+    const requestPayload = companyId
+      ? { ...payload, company_id: companyId }
+      : payload;
+
     const { data } = await api.put<StaffCreateResponse>(
       `/api/v1/users/${id}`,
-      payload,
+      requestPayload,
     );
     return data.user;
   } catch (error) {

@@ -9,6 +9,11 @@ export interface StaffUser {
   tg_user_name: string;
   created_at: string;
   updated_at: string;
+  company_id?: string;
+  company?: {
+    id: string;
+    name?: string;
+  };
 }
 
 export interface CreateStaffPayload {
@@ -16,6 +21,7 @@ export interface CreateStaffPayload {
   phone_number: string;
   password: string;
   role: StaffRole;
+  company_id?: string;
 }
 
 export interface UpdateStaffPayload {
@@ -23,6 +29,7 @@ export interface UpdateStaffPayload {
   phone_number: string;
   password?: string;
   role: StaffRole;
+  company_id?: string;
 }
 
 export interface StaffListResponse {

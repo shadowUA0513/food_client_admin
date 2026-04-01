@@ -11,6 +11,7 @@ import {
 import { useQueryClient } from "@tanstack/react-query";
 import { useState, type FormEvent } from "react";
 import { useTranslation } from "react-i18next";
+import { useAuthStore } from "../../store/auth";
 import { useNavigate } from "react-router-dom";
 import { PhoneNumberInput } from "../../components/common/PhoneNumberInput";
 import { useCreateStaffUser } from "../../service/staff";
@@ -37,6 +38,8 @@ const MIN_PASSWORD_LENGTH = 6;
 export default function AddStaff() {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const companyId = useAuthStore((state) => state.company?.id);
+  const company = useAuthStore((state) => state);
   const queryClient = useQueryClient();
   const createStaffMutation = useCreateStaffUser();
   const [errors, setErrors] = useState<FormErrors>({});
@@ -100,8 +103,10 @@ export default function AddStaff() {
     }
 
     try {
-      await createStaffMutation.mutateAsync(form);
-      await queryClient.invalidateQueries({ queryKey: ["staff-users"] });
+      await createStaffMutation.mutateAsync({ ...form, company_id: companyId });
+      await queryClient.invalidateQueries({
+        queryKey: ["staff-users", companyId],
+      });
       showSuccessNotification({
         message: "Staff member created successfully.",
       });

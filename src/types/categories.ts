@@ -9,7 +9,7 @@ export interface Category {
 }
 
 export interface CreateCategoryPayload {
-  company_id: string;
+  company_id?: string;
   name_uz: string;
   name_ru: string;
   sort_order: number;

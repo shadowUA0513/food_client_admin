@@ -14,10 +14,11 @@ import {
 import { useQueryClient } from "@tanstack/react-query";
 import { useState, type FormEvent } from "react";
 import { useTranslation } from "react-i18next";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { useCategories } from "../../service/categories";
 import { uploadImage } from "../../service/images";
 import { useCreateProduct } from "../../service/products";
+import { useAuthStore } from "../../store/auth";
 import type { CreateProductPayload } from "../../types/products";
 import {
   showErrorNotification,
@@ -47,7 +48,7 @@ const EMPTY_FORM = {
 
 export default function AddProduct() {
   const { t } = useTranslation();
-  const { companyId } = useParams();
+  const companyId = useAuthStore((state) => state.company?.id);
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const createProductMutation = useCreateProduct();
@@ -68,7 +69,7 @@ export default function AddProduct() {
 
   const handleClose = () => {
     resetForm();
-    navigate(`/companies/${companyId}/product`);
+    navigate("/product");
   };
 
   const handleImageFileChange = async (file: File | null) => {

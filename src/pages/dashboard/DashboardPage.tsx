@@ -1,8 +1,8 @@
-import { Card, SimpleGrid, Stack, Text, Title } from "@mantine/core";
+import { Card, Group, SimpleGrid, Stack, Text, Title } from "@mantine/core";
 import { useTranslation } from "react-i18next";
 import { useAuthStore } from "../../store/auth";
 
-export default function HomePage() {
+export default function DashboardPage() {
   const { t } = useTranslation();
   const company = useAuthStore((state) => state.company);
   const user = useAuthStore((state) => state.user);
@@ -33,13 +33,26 @@ export default function HomePage() {
           </Title>
         </Card>
       </SimpleGrid>
+
       <Card withBorder radius="xl" p="lg">
-        <Text c="dimmed" size="sm">
-          Role
-        </Text>
-        <Text fw={600} mt={8}>
-          {user?.role ?? "-"}
-        </Text>
+        <Group justify="space-between" align="flex-start">
+          <div>
+            <Text c="dimmed" size="sm">
+              Company ID
+            </Text>
+            <Text fw={600} mt={8}>
+              {company?.id ?? "-"}
+            </Text>
+          </div>
+          <div>
+            <Text c="dimmed" size="sm">
+              Role
+            </Text>
+            <Text fw={600} mt={8}>
+              {user?.role ?? "-"}
+            </Text>
+          </div>
+        </Group>
       </Card>
     </Stack>
   );

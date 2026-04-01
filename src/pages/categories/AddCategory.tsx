@@ -10,8 +10,9 @@ import {
 import { useQueryClient } from "@tanstack/react-query";
 import { useState, type FormEvent } from "react";
 import { useTranslation } from "react-i18next";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { useCreateCategory } from "../../service/categories";
+import { useAuthStore } from "../../store/auth";
 import type { CreateCategoryPayload } from "../../types/categories";
 import {
   showErrorNotification,
@@ -33,7 +34,7 @@ const EMPTY_FORM = {
 
 export default function AddCategory() {
   const { t } = useTranslation();
-  const { companyId } = useParams();
+  const companyId = useAuthStore((state) => state.company?.id);
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const createCategoryMutation = useCreateCategory();
@@ -47,7 +48,7 @@ export default function AddCategory() {
 
   const handleClose = () => {
     resetForm();
-    navigate(`/companies/${companyId}/category`);
+    navigate("/category");
   };
 
   const validateForm = () => {

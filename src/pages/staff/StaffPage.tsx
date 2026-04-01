@@ -20,6 +20,7 @@ import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Outlet, useNavigate } from "react-router-dom";
 import { useDeleteStaffUser, useStaffUsers } from "../../service/staff";
+import { useAuthStore } from "../../store/auth";
 import type { StaffUser } from "../../types/staff";
 import {
   showErrorNotification,
@@ -30,6 +31,7 @@ export default function StaffPage() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const companyId = useAuthStore((state) => state.company?.id);
   const [deleteOpened, { open: openDelete, close: closeDelete }] =
     useDisclosure(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
@@ -38,8 +40,15 @@ export default function StaffPage() {
   const { data, isLoading, error } = useStaffUsers();
   const deleteStaffMutation = useDeleteStaffUser();
 
+  const filteredStaff = (data ?? []).filter(
+    (member) =>
+      member.company?.id === companyId || member.company_id === companyId,
+  );
+
   const handleDeleteSuccess = async () => {
-    await queryClient.invalidateQueries({ queryKey: ["staff-users"] });
+    await queryClient.invalidateQueries({
+      queryKey: ["staff-users", useAuthStore.getState().company?.id],
+    });
     showSuccessNotification({
       message: "Staff member deleted successfully.",
     });
@@ -145,7 +154,7 @@ export default function StaffPage() {
             {t("staffPage.totalStaff")}
           </Text>
           <Title order={3} mt={8}>
-            {data?.length ?? 0}
+            {filteredStaff.length}
           </Title>
         </Card>
         <Card withBorder radius="xl" p="lg">
@@ -153,7 +162,7 @@ export default function StaffPage() {
             {t("staffPage.adminCount")}
           </Text>
           <Title order={3} mt={8}>
-            {data?.filter((member) => member.role === "admin").length ?? 0}
+            {filteredStaff.filter((member) => member.role === "admin").length}
           </Title>
         </Card>
         <Card withBorder radius="xl" p="lg">
@@ -161,8 +170,10 @@ export default function StaffPage() {
             {t("staffPage.superAdminCount")}
           </Text>
           <Title order={3} mt={8}>
-            {data?.filter((member) => member.role === "super_admin").length ??
-              0}
+            {
+              filteredStaff.filter((member) => member.role === "super_admin")
+                .length
+            }
           </Title>
         </Card>
       </SimpleGrid>
@@ -177,7 +188,10 @@ export default function StaffPage() {
               variant="light"
               onClick={() => {
                 void queryClient.invalidateQueries({
-                  queryKey: ["staff-users"],
+                  queryKey: [
+                    "staff-users",
+                    useAuthStore.getState().company?.id,
+                  ],
                 });
               }}
             >
@@ -191,7 +205,7 @@ export default function StaffPage() {
               <Text c="dimmed">{t("staffPage.loading")}</Text>
             </Stack>
           </Center>
-        ) : !data?.length ? (
+        ) : !filteredStaff.length ? (
           <Center py="xl">
             <Stack align="center" gap="xs">
               <Title order={4}>{t("staffPage.emptyTitle")}</Title>
@@ -220,7 +234,7 @@ export default function StaffPage() {
               </Table.Tr>
             </Table.Thead>
             <Table.Tbody>
-              {data?.map((member) => (
+              {filteredStaff.map((member) => (
                 <Table.Tr key={member.id}>
                   <Table.Td>
                     <Text fw={600}>{member.full_name}</Text>

@@ -9,9 +9,7 @@ import {
   Loader,
   Modal,
   Pagination,
-  Select,
   Stack,
-  Switch,
   Table,
   Text,
   TextInput,
@@ -27,10 +25,10 @@ import {
 } from "@tabler/icons-react";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Outlet, useNavigate, useParams } from "react-router-dom";
-import { useCategories } from "../../service/categories";
-import { useDeleteProduct, useProducts } from "../../service/products";
-import type { Product } from "../../types/products";
+import { Outlet, useNavigate } from "react-router-dom";
+import { useCategories, useDeleteCategory } from "../../service/categories";
+import { useAuthStore } from "../../store/auth";
+import type { Category } from "../../types/categories";
 import {
   showErrorNotification,
   showSuccessNotification,
@@ -38,48 +36,36 @@ import {
 
 const ITEMS_PER_PAGE = 10;
 
-export default function CompanyProductPage() {
+export default function CategoryPage() {
   const { t } = useTranslation();
-  const { companyId } = useParams();
+  const companyId = useAuthStore((state) => state.company?.id);
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [search, setSearch] = useState("");
   const [debouncedSearch] = useDebouncedValue(search, 400);
   const [page, setPage] = useState(1);
-  const [categoryId, setCategoryId] = useState<string | null>(null);
-  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+  const [selectedCategory, setSelectedCategory] = useState<Category | null>(
+    null,
+  );
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [deleteOpened, { open: openDelete, close: closeDelete }] =
     useDisclosure(false);
 
-  const { data: categoriesData } = useCategories(companyId, 1000, 1, "");
-  const {
-    data,
-    isLoading,
-    error,
-  } = useProducts(
+  const { data, isLoading, error } = useCategories(
     companyId,
     ITEMS_PER_PAGE,
     page,
     debouncedSearch.trim(),
-    categoryId
   );
-  const deleteProductMutation = useDeleteProduct();
+  const deleteCategoryMutation = useDeleteCategory();
 
-  const products = data?.products ?? [];
+  const categories = data?.categories ?? [];
   const totalCount = data?.count ?? 0;
   const totalPages = Math.max(1, Math.ceil(totalCount / ITEMS_PER_PAGE));
-  const categoryMap = new Map(
-    (categoriesData?.categories ?? []).map((category) => [category.id, category])
-  );
-  const categoryOptions = (categoriesData?.categories ?? []).map((category) => ({
-    value: category.id,
-    label: `${category.name_uz} / ${category.name_ru}`,
-  }));
 
   useEffect(() => {
     setPage(1);
-  }, [debouncedSearch, categoryId]);
+  }, [debouncedSearch]);
 
   useEffect(() => {
     if (page > totalPages) {
@@ -87,30 +73,32 @@ export default function CompanyProductPage() {
     }
   }, [page, totalPages]);
 
-  const handleOpenDelete = (product: Product) => {
-    setSelectedProduct(product);
+  const handleOpenDelete = (category: Category) => {
+    setSelectedCategory(category);
     openDelete();
   };
 
   const handleCloseDelete = () => {
     closeDelete();
-    setSelectedProduct(null);
+    setSelectedCategory(null);
   };
 
   const handleDelete = async () => {
-    if (!selectedProduct || !companyId) {
+    if (!selectedCategory || !companyId) {
       return;
     }
 
     try {
-      setDeletingId(selectedProduct.id);
-      await deleteProductMutation.mutateAsync(selectedProduct.id);
-      await queryClient.invalidateQueries({ queryKey: ["products", companyId] });
+      setDeletingId(selectedCategory.id);
+      await deleteCategoryMutation.mutateAsync(selectedCategory.id);
       await queryClient.invalidateQueries({
-        queryKey: ["product", companyId, selectedProduct.id],
+        queryKey: ["categories", companyId],
+      });
+      await queryClient.invalidateQueries({
+        queryKey: ["category", companyId, selectedCategory.id],
       });
       showSuccessNotification({
-        message: t("companyDetails.productDeleteSuccess"),
+        message: "Category deleted successfully.",
       });
       handleCloseDelete();
     } catch (deleteError) {
@@ -118,7 +106,7 @@ export default function CompanyProductPage() {
         message:
           deleteError instanceof Error
             ? deleteError.message
-            : t("companyDetails.productDeleteError"),
+            : "Failed to delete category.",
       });
     } finally {
       setDeletingId(null);
@@ -132,32 +120,32 @@ export default function CompanyProductPage() {
       <Modal
         opened={deleteOpened}
         onClose={handleCloseDelete}
-        title={t("companyDetails.deleteProduct")}
+        title="Delete category"
         centered
       >
         <Stack gap="md">
           <Text>
-            {t("companyDetails.deleteProductConfirmation")}{" "}
+            Are you sure you want to delete{" "}
             <Text span fw={700}>
-              {selectedProduct?.name_uz}
+              {selectedCategory?.name_uz}
             </Text>
             ?
           </Text>
           <Group justify="flex-end">
             <Button variant="default" onClick={handleCloseDelete}>
-              {t("staffPage.cancel")}
+              Cancel
             </Button>
             <Button
               color="red"
               loading={
-                deleteProductMutation.isPending &&
-                deletingId === selectedProduct?.id
+                deleteCategoryMutation.isPending &&
+                deletingId === selectedCategory?.id
               }
               onClick={() => {
                 void handleDelete();
               }}
             >
-              {t("companyDetails.deleteProduct")}
+              Delete
             </Button>
           </Group>
         </Stack>
@@ -165,24 +153,24 @@ export default function CompanyProductPage() {
 
       <Group justify="space-between" align="center">
         <div>
-          <Title order={3}>{t("companyDetails.productTitle")}</Title>
-          <Text c="dimmed">{t("companyDetails.productSubtitle")}</Text>
+          <Title order={3}>{t("companyDetails.categoryTitle")}</Title>
+          <Text c="dimmed">{t("companyDetails.categorySubtitle")}</Text>
         </div>
         <Button
           leftSection={<IconPlus size={16} />}
           onClick={() => {
-            navigate(`/companies/${companyId}/product/add-product`);
+            navigate("/category/add");
           }}
         >
-          {t("companyDetails.addProduct")}
+          {t("companyDetails.addCategory")}
         </Button>
       </Group>
 
       <Card withBorder radius="xl" p="lg">
         <Group justify="space-between" align="end">
           <TextInput
-            label={t("companyDetails.search")}
-            placeholder={t("companyDetails.searchProducts")}
+            label="Search"
+            placeholder="Search categories"
             value={search}
             onChange={(event) => {
               setSearch(event.currentTarget.value);
@@ -195,18 +183,8 @@ export default function CompanyProductPage() {
             }}
             style={{ flex: 1 }}
           />
-          <Select
-            label={t("companyDetails.category")}
-            placeholder={t("companyDetails.allCategories")}
-            data={categoryOptions}
-            value={categoryId}
-            onChange={setCategoryId}
-            clearable
-            searchable
-            style={{ minWidth: 260 }}
-          />
           <Text size="sm" c="dimmed">
-            {totalCount} {t("companyDetails.items")}
+            {totalCount} items
           </Text>
         </Group>
       </Card>
@@ -215,24 +193,24 @@ export default function CompanyProductPage() {
         {error ? (
           <Stack align="center" py="xl" gap="sm">
             <Alert color="red" variant="light" w="100%">
-              {error.message || t("companyDetails.productLoadError")}
+              {error.message || "Failed to load categories."}
             </Alert>
             <Button
               variant="light"
               onClick={() => {
                 void queryClient.invalidateQueries({
-                  queryKey: ["products", companyId],
+                  queryKey: ["categories", companyId],
                 });
               }}
             >
-              {t("staffPage.retry")}
+              Retry
             </Button>
           </Stack>
         ) : isLoading ? (
           <Center py="xl">
             <Stack align="center" gap="sm">
               <Loader />
-              <Text c="dimmed">{t("companyDetails.productLoading")}</Text>
+              <Text c="dimmed">Loading categories...</Text>
             </Stack>
           </Center>
         ) : (
@@ -240,54 +218,43 @@ export default function CompanyProductPage() {
             <Table highlightOnHover verticalSpacing="md">
               <Table.Thead>
                 <Table.Tr>
-                  <Table.Th>{t("companyDetails.productNameUz")}</Table.Th>
-                  <Table.Th>{t("companyDetails.productNameRu")}</Table.Th>
-                  <Table.Th>{t("companyDetails.categoryTitle")}</Table.Th>
-                  <Table.Th>{t("companyDetails.price")}</Table.Th>
-                  <Table.Th>{t("companyDetails.productStockQuantity")}</Table.Th>
-                  <Table.Th>{t("companyDetails.productAvailable")}</Table.Th>
+                  <Table.Th>Name UZ</Table.Th>
+                  <Table.Th>Name RU</Table.Th>
+                  <Table.Th>Sort order</Table.Th>
+                  <Table.Th>Created at</Table.Th>
                   <Table.Th>{t("staffPage.actions")}</Table.Th>
                 </Table.Tr>
               </Table.Thead>
               <Table.Tbody>
-                {products.length ? (
-                  products.map((product) => (
-                    <Table.Tr key={product.id}>
+                {categories.length ? (
+                  categories.map((category) => (
+                    <Table.Tr key={category.id}>
                       <Table.Td>
-                        <Text fw={600}>{product.name_uz}</Text>
+                        <Text fw={600}>{category.name_uz}</Text>
                       </Table.Td>
                       <Table.Td>
-                        <Text c="dimmed">{product.name_ru}</Text>
-                      </Table.Td>
-                      <Table.Td>
-                        <Text c="dimmed">
-                          {categoryMap.get(product.category_id)?.name_uz ??
-                            product.category_id}
-                        </Text>
+                        <Text c="dimmed">{category.name_ru}</Text>
                       </Table.Td>
                       <Table.Td>
                         <Badge color="orange" variant="light">
-                          {product.price}
+                          {category.sort_order}
                         </Badge>
                       </Table.Td>
                       <Table.Td>
-                        <Badge color="blue" variant="light">
-                          {product.stock_quantity}
-                        </Badge>
-                      </Table.Td>
-                      <Table.Td>
-                        <Switch checked={product.is_available} readOnly />
+                        <Text c="dimmed">
+                          {new Date(category.created_at).toLocaleDateString()}
+                        </Text>
                       </Table.Td>
                       <Table.Td>
                         <Group gap="xs" wrap="nowrap">
                           <ActionIcon
                             variant="light"
                             color="blue"
-                            aria-label={t("companyDetails.editProduct")}
+                            aria-label={t("companyDetails.editCategory")}
                             onClick={() => {
                               navigate(
-                                `/companies/${companyId}/product/edit/${product.id}`,
-                                { state: { product } }
+                                `/category/edit/${category.id}`,
+                                { state: { category } },
                               );
                             }}
                           >
@@ -296,11 +263,11 @@ export default function CompanyProductPage() {
                           <ActionIcon
                             variant="light"
                             color="red"
-                            aria-label={t("companyDetails.deleteProduct")}
-                            title={t("companyDetails.deleteProduct")}
-                            disabled={deleteProductMutation.isPending}
+                            aria-label="Delete category"
+                            title="Delete category"
+                            disabled={deleteCategoryMutation.isPending}
                             onClick={() => {
-                              handleOpenDelete(product);
+                              handleOpenDelete(category);
                             }}
                           >
                             <IconTrash size={18} />
@@ -311,9 +278,9 @@ export default function CompanyProductPage() {
                   ))
                 ) : (
                   <Table.Tr>
-                    <Table.Td colSpan={7}>
+                    <Table.Td colSpan={5}>
                       <Text c="dimmed" ta="center" py="md">
-                        {t("companyDetails.noProductsFound")}
+                        No categories found.
                       </Text>
                     </Table.Td>
                   </Table.Tr>
@@ -323,10 +290,8 @@ export default function CompanyProductPage() {
 
             <Group justify="space-between" mt="lg">
               <Text size="sm" c="dimmed">
-                {t("companyDetails.showing")}{" "}
-                {totalCount ? (page - 1) * ITEMS_PER_PAGE + 1 : 0}-
-                {Math.min(page * ITEMS_PER_PAGE, totalCount)}{" "}
-                {t("companyDetails.of")} {totalCount}
+                Showing {totalCount ? (page - 1) * ITEMS_PER_PAGE + 1 : 0}-
+                {Math.min(page * ITEMS_PER_PAGE, totalCount)} of {totalCount}
               </Text>
               <Pagination value={page} onChange={setPage} total={totalPages} />
             </Group>

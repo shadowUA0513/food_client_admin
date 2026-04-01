@@ -29,13 +29,12 @@ export const useAuthStore = create<AuthStore>()(
         try {
           const session = await loginRequest(payload);
 
+          
+
           if (session.token) {
             setAuthCookie(session.token);
           }
 
-          
-          console.log(session.company);
-          
           set({
             isAuthenticated: true,
             phone: session.phone,

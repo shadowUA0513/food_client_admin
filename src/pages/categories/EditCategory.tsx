@@ -17,6 +17,7 @@ import {
   useCategoryById,
   useUpdateCategory,
 } from "../../service/categories";
+import { useAuthStore } from "../../store/auth";
 import type { Category, UpdateCategoryPayload } from "../../types/categories";
 import {
   showErrorNotification,
@@ -39,7 +40,8 @@ const EMPTY_FORM: UpdateCategoryPayload = {
 
 export default function EditCategory() {
   const { t } = useTranslation();
-  const { companyId, categoryId } = useParams();
+  const { categoryId } = useParams();
+  const companyId = useAuthStore((state) => state.company?.id);
   const navigate = useNavigate();
   const location = useLocation();
   const queryClient = useQueryClient();
@@ -71,7 +73,7 @@ export default function EditCategory() {
 
   const handleClose = () => {
     setErrors({});
-    navigate(`/companies/${companyId}/category`);
+    navigate("/category");
   };
 
   const validateForm = () => {

@@ -39,6 +39,7 @@ export function AdminLayout() {
   const isDark = computedColorScheme === "dark";
   const navigationItems = [
     { label: t("common.dashboard"), icon: IconLayoutDashboard, to: "/" },
+    { label: t("common.partners"), icon: IconUsers, to: "/partners" },
     { label: t("common.staff"), icon: IconBriefcase, to: "/staff" },
     { label: t("companyDetails.category"), icon: IconLayoutDashboard, to: "/category" },
     { label: t("companyDetails.product"), icon: IconLayoutDashboard, to: "/product" },

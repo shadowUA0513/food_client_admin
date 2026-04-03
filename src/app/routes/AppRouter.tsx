@@ -2,6 +2,8 @@ import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import AddCategory from "../../pages/categories/AddCategory";
 import ClientsPage from "../../pages/clients/ClientsPage";
 import HomePage from "../../pages/home/HomePage";
+import AddPartner from "../../pages/partners/AddPartner";
+import EditPartner from "../../pages/partners/EditPartner";
 import PartnersPage from "../../pages/partners/PartnersPage";
 import AddProduct from "../../pages/products/AddProduct";
 import CategoryPage from "../../pages/categories/CategoryPage";
@@ -31,7 +33,10 @@ export function AppRouter() {
         <Route element={<ProtectedRoute isAllowed={isAuthenticated} />}>
           <Route element={<AdminLayout />}>
             <Route path="/" element={<HomePage />} />
-            <Route path="/partners" element={<PartnersPage />} />
+            <Route path="/partners" element={<PartnersPage />}>
+              <Route path="add" element={<AddPartner />} />
+              <Route path="edit/:partnerId" element={<EditPartner />} />
+            </Route>
             <Route path="/staff" element={<StaffPage />}>
               <Route path="add" element={<AddStaff />} />
               <Route path="edit/:staffId" element={<EditStaff />} />

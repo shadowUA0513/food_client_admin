@@ -1,4 +1,4 @@
-import {
+﻿import {
   Alert,
   Button,
   FileInput,
@@ -37,6 +37,8 @@ interface FormErrors {
   form?: string;
 }
 
+const MIN_IMAGE_SIZE_BYTES = 200 * 1024;
+
 const EMPTY_FORM: UpdateProductPayload = {
   company_id: "",
   category_id: "",
@@ -48,6 +50,10 @@ const EMPTY_FORM: UpdateProductPayload = {
   stock_quantity: 0,
   is_available: true,
 };
+
+function formatFileSize(bytes: number) {
+  return `${Math.ceil(bytes / 1024)} KB`;
+}
 
 export default function EditProduct() {
   const { t } = useTranslation();
@@ -116,7 +122,17 @@ export default function EditProduct() {
     if (!file.type.startsWith("image/")) {
       setErrors((current) => ({
         ...current,
-        form: "Please choose an image file.",
+        form: t("upload.chooseImageFile"),
+      }));
+      return;
+    }
+
+    if (file.size < MIN_IMAGE_SIZE_BYTES) {
+      setErrors((current) => ({
+        ...current,
+        form: t("upload.imageMinSize", {
+          size: formatFileSize(MIN_IMAGE_SIZE_BYTES),
+        }),
       }));
       return;
     }
@@ -348,7 +364,11 @@ export default function EditProduct() {
               clearable
               onChange={handleImageFileChange}
               description={
-                isUploadingImage ? "Uploading image..." : "Select an image file to upload."
+                isUploadingImage
+                  ? t("upload.uploadingImage")
+                  : t("upload.imageUploadHint", {
+                    size: formatFileSize(MIN_IMAGE_SIZE_BYTES),
+                  })
               }
             />
 
@@ -408,3 +428,5 @@ export default function EditProduct() {
     </Modal>
   );
 }
+
+

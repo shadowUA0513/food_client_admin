@@ -1,4 +1,4 @@
-import {
+﻿import {
   Alert,
   Badge,
   Button,
@@ -13,11 +13,13 @@ import {
 } from "@mantine/core";
 import { useQueryClient } from "@tanstack/react-query";
 import { IconRefresh } from "@tabler/icons-react";
+import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 import { useKitchenOrders } from "../../service/kitchen";
 import { useAuthStore } from "../../store/auth";
 
 export default function KitchenPage() {
+  const { t } = useTranslation();
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   const company = useAuthStore((state) => state.company);
@@ -29,9 +31,9 @@ export default function KitchenPage() {
     <Stack gap="md">
       <Group justify="space-between" align="flex-start">
         <div>
-          <Title order={3}>Kitchen</Title>
+          <Title order={3}>{t("kitchenPage.title")}</Title>
           <Text c="dimmed">
-            Open a partner and see its orders in a simple list.
+            {t("kitchenPage.subtitle")}
           </Text>
         </div>
         <Group gap="sm">
@@ -48,7 +50,7 @@ export default function KitchenPage() {
               });
             }}
           >
-            Refresh
+            {t("commonActions.refresh")}
           </Button>
         </Group>
       </Group>
@@ -68,7 +70,7 @@ export default function KitchenPage() {
                   });
                 }}
               >
-                Retry
+                {t("commonActions.retry")}
               </Button>
             </Group>
           </Stack>
@@ -76,12 +78,12 @@ export default function KitchenPage() {
           <Center py="xl">
             <Stack align="center" gap="sm">
               <Loader />
-              <Text c="dimmed">Loading kitchen orders...</Text>
+              <Text c="dimmed">{t("kitchenPage.loading")}</Text>
             </Stack>
           </Center>
         ) : !partners.length ? (
           <Alert color="blue" variant="light">
-            No kitchen partners or orders found.
+            {t("kitchenPage.empty")}
           </Alert>
         ) : (
           <SimpleGrid cols={{ base: 1, sm: 2, lg: 3, xl: 4 }} spacing="sm">
@@ -121,7 +123,7 @@ export default function KitchenPage() {
 
                   <div>
                     <Text size="sm" c="dimmed">
-                      Open this partner to see items and totals.
+                      {t("kitchenPage.openPartnerHint")}
                     </Text>
                   </div>
                 </Stack>
@@ -133,3 +135,7 @@ export default function KitchenPage() {
     </Stack>
   );
 }
+
+
+
+

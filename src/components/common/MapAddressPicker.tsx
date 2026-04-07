@@ -1,4 +1,4 @@
-import {
+﻿import {
   Alert,
   Box,
   Card,
@@ -8,6 +8,7 @@ import {
   Text,
 } from "@mantine/core";
 import { useEffect, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 
 const YANDEX_MAPS_SCRIPT_ID = "yandex-maps-api-script";
 const YANDEX_MAPS_API_KEY = import.meta.env.VITE_YANDEX_MAPS_API_KEY;
@@ -137,6 +138,7 @@ export function MapAddressPicker({
   onChange,
   error,
 }: MapAddressPickerProps) {
+  const { t } = useTranslation();
   const mapRef = useRef<HTMLDivElement | null>(null);
   const mapInstanceRef = useRef<YandexMapInstance | null>(null);
   const updatePlacemarkRef = useRef<
@@ -233,7 +235,7 @@ export function MapAddressPicker({
             void reverseGeocode(nextLatitude, nextLongitude)
               .then((resolvedAddress) => {
                 if (!resolvedAddress) {
-                  setMapError("Address not found for this point.");
+                  setMapError(t("partnersPage.addressNotFoundForPoint"));
                   return;
                 }
 
@@ -246,7 +248,7 @@ export function MapAddressPicker({
                 setMapError(null);
               })
               .catch(() => {
-                setMapError("Failed to resolve address.");
+                setMapError(t("partnersPage.addressResolveError"));
               })
               .finally(() => {
                 setIsResolvingAddress(false);
@@ -260,7 +262,7 @@ export function MapAddressPicker({
       })
       .catch(() => {
         if (!cancelled) {
-          setMapError("Failed to load Yandex map.");
+          setMapError(t("partnersPage.yandexMapLoadError"));
           setIsLoadingMap(false);
         }
       });
@@ -290,9 +292,9 @@ export function MapAddressPicker({
     <Stack gap="md">
       <Card withBorder radius="md" p="md">
         <Stack gap={4}>
-          <Text fw={700}>Select on map</Text>
+          <Text fw={700}>{t("partnersPage.mapSelectTitle")}</Text>
           <Text size="sm" c="dimmed">
-            Click on Yandex map to choose the partner address.
+            {t("partnersPage.mapSelectDescription")}
           </Text>
         </Stack>
       </Card>
@@ -325,12 +327,11 @@ export function MapAddressPicker({
 
       <Card withBorder radius="md" p="md">
         <Text size="sm" fw={700}>
-          Selected address
+          {t("partnersPage.selectedAddress")}
         </Text>
         <Text size="sm" c="dimmed" mt={4}>
           {isResolvingAddress
-            ? "Resolving address..."
-            : address || "Click the map to choose address"}
+            ? t("partnersPage.resolvingAddress") : address || t("partnersPage.clickMapToChooseAddress")}
         </Text>
         {error ? (
           <Text size="xs" c="red" mt={8}>
@@ -346,3 +347,6 @@ export function MapAddressPicker({
     </Stack>
   );
 }
+
+
+

@@ -1,4 +1,4 @@
-import {
+﻿import {
   Alert,
   Badge,
   Button,
@@ -12,6 +12,7 @@ import {
 } from "@mantine/core";
 import { useQueryClient } from "@tanstack/react-query";
 import { IconArrowLeft, IconRefresh } from "@tabler/icons-react";
+import { useTranslation } from "react-i18next";
 import { useNavigate, useParams } from "react-router-dom";
 import { useKitchenOrders } from "../../service/kitchen";
 import { useProducts } from "../../service/products";
@@ -114,6 +115,7 @@ function OrderCard({
 }
 
 export default function KitchenPartnerOrdersPage() {
+  const { t } = useTranslation();
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   const { partnerId } = useParams();
@@ -139,12 +141,12 @@ export default function KitchenPartnerOrdersPage() {
               navigate("/kitchen");
             }}
           >
-            Back to partners
+            {t("kitchenPage.backToPartners")}
           </Button>
           <Title order={3} mt="xs">
-            {selectedPartner?.partner_name ?? "Kitchen orders"}
+            {selectedPartner?.partner_name ?? t("kitchenPage.ordersTitle")}
           </Title>
-          <Text c="dimmed">Simple order cards with items and total.</Text>
+          <Text c="dimmed">{t("kitchenPage.ordersSubtitle")}</Text>
         </div>
         <Button
           variant="light"
@@ -156,7 +158,7 @@ export default function KitchenPartnerOrdersPage() {
             });
           }}
         >
-          Refresh
+          {t("commonActions.refresh")}
         </Button>
       </Group>
 
@@ -175,31 +177,31 @@ export default function KitchenPartnerOrdersPage() {
                   });
                 }}
               >
-                Retry
+                {t("commonActions.retry")}
               </Button>
             </Group>
           </Stack>
         ) : isLoading ? (
           <Center py="xl">
-            <Text c="dimmed">Loading kitchen orders...</Text>
+            <Text c="dimmed">{t("kitchenPage.loading")}</Text>
           </Center>
         ) : !selectedPartner ? (
           <Center py="xl">
             <Stack align="center" gap="sm">
-              <Text c="dimmed">Partner not found.</Text>
+              <Text c="dimmed">{t("kitchenPage.partnerNotFound")}</Text>
               <Button
                 variant="light"
                 onClick={() => {
                   navigate("/kitchen", { replace: true });
                 }}
               >
-                Go to partners
+                {t("kitchenPage.goToPartners")}
               </Button>
             </Stack>
           </Center>
         ) : !selectedPartner.orders.length ? (
           <Center py="xl">
-            <Text c="dimmed">No orders for this partner.</Text>
+            <Text c="dimmed">{t("kitchenPage.noOrders")}</Text>
           </Center>
         ) : (
           <SimpleGrid cols={{ base: 1, sm: 2, lg: 3, xl: 4 }} spacing="sm">
@@ -212,3 +214,6 @@ export default function KitchenPartnerOrdersPage() {
     </Stack>
   );
 }
+
+
+

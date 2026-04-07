@@ -1,6 +1,7 @@
 import axios, { AxiosError } from "axios";
 import { AUTH_COOKIE_KEY, API_TIMEOUT_MS } from "./constant";
 import { env } from "./env";
+import { AUTH_EXPIRED_EVENT } from "./events";
 import { clearAuthSession } from "./session";
 
 function getCookie(name: string) {
@@ -31,6 +32,7 @@ api.interceptors.response.use(
   (error: AxiosError) => {
     if (error.response?.status === 401) {
       clearAuthSession();
+      window.dispatchEvent(new Event(AUTH_EXPIRED_EVENT));
 
       if (window.location.pathname !== "/login") {
         window.location.replace("/login");

@@ -4,7 +4,6 @@ import {
   Button,
   Card,
   Center,
-  Code,
   Group,
   Loader,
   Stack,
@@ -26,9 +25,7 @@ export default function ClientsPage() {
       <Group justify="space-between" align="flex-start">
         <div>
           <Title order={3}>Clients</Title>
-          <Text c="dimmed">
-            Clients for company <Code>{CLIENTS_COMPANY_ID}</Code>
-          </Text>
+          <Text c="dimmed">Company clients list.</Text>
         </div>
         <Group gap="sm">
           <Badge color="orange" variant="light" size="lg">
@@ -82,7 +79,6 @@ export default function ClientsPage() {
           <Table highlightOnHover verticalSpacing="md">
             <Table.Thead>
               <Table.Tr>
-                <Table.Th>ID</Table.Th>
                 <Table.Th>Full name</Table.Th>
                 <Table.Th>Username</Table.Th>
                 <Table.Th>Phone</Table.Th>
@@ -93,9 +89,6 @@ export default function ClientsPage() {
             <Table.Tbody>
               {clients.map((client) => (
                 <Table.Tr key={client.id}>
-                  <Table.Td>
-                    <Text fw={600}>{client.id}</Text>
-                  </Table.Td>
                   <Table.Td>{client.full_name || "-"}</Table.Td>
                   <Table.Td>
                     <Text c="dimmed">

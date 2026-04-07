@@ -1,5 +1,8 @@
 import { notifications } from "@mantine/notifications";
-import { IconCheck, IconX } from "@tabler/icons-react";
+import {
+  IconRosetteDiscountCheckFilled,
+  IconAlertCircleFilled,
+} from "@tabler/icons-react";
 
 type NotificationOptions = {
   message: string;
@@ -14,7 +17,31 @@ export function showSuccessNotification({
     color: "green",
     title,
     message,
-    icon: <IconCheck size={16} />,
+    autoClose: 3500,
+    radius: "lg",
+    withBorder: true,
+    styles: {
+      root: {
+        backgroundColor: "#ebfbee",
+        borderColor: "#8ce99a",
+        boxShadow: "0 10px 30px rgba(47, 158, 68, 0.12)",
+      },
+      title: {
+        color: "#2b8a3e",
+        fontWeight: 700,
+      },
+      description: {
+        color: "#2f4f2f",
+      },
+      icon: {
+        backgroundColor: "#2f9e44",
+        color: "#ffffff",
+      },
+      closeButton: {
+        color: "#2b8a3e",
+      },
+    },
+    icon: <IconRosetteDiscountCheckFilled size={18} />,
   });
 }
 
@@ -26,6 +53,30 @@ export function showErrorNotification({
     color: "red",
     title,
     message,
-    icon: <IconX size={16} />,
+    autoClose: 4500,
+    radius: "lg",
+    withBorder: true,
+    styles: {
+      root: {
+        backgroundColor: "#fff5f5",
+        borderColor: "#ffa8a8",
+        boxShadow: "0 10px 30px rgba(240, 62, 62, 0.12)",
+      },
+      title: {
+        color: "#c92a2a",
+        fontWeight: 700,
+      },
+      description: {
+        color: "#5f2120",
+      },
+      icon: {
+        backgroundColor: "#e03131",
+        color: "#ffffff",
+      },
+      closeButton: {
+        color: "#c92a2a",
+      },
+    },
+    icon: <IconAlertCircleFilled size={18} />,
   });
 }

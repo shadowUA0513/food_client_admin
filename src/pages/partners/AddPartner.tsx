@@ -3,7 +3,6 @@ import {
   Button,
   Group,
   Modal,
-  NumberInput,
   Stack,
   Switch,
   TextInput,
@@ -13,6 +12,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useState, type FormEvent } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
+import { MapAddressPicker } from "../../components/common/MapAddressPicker";
 import { useCreatePartner } from "../../service/partners";
 import { useAuthStore } from "../../store/auth";
 import type { CreatePartnerPayload } from "../../types/partners";
@@ -38,6 +38,14 @@ const EMPTY_FORM = {
   address_description: "",
   is_active: true,
 };
+
+function hasValidCoordinates(latitude: number, longitude: number) {
+  return (
+    Number.isFinite(latitude) &&
+    Number.isFinite(longitude) &&
+    !(latitude === 0 && longitude === 0)
+  );
+}
 
 export default function AddPartner() {
   const { t } = useTranslation();
@@ -69,11 +77,11 @@ export default function AddPartner() {
       nextErrors.name_ru = t("partnersPage.nameRuRequired");
     }
 
-    if (!Number.isFinite(form.latitude)) {
+    if (!hasValidCoordinates(form.latitude, form.longitude)) {
       nextErrors.latitude = t("partnersPage.latitudeRequired");
     }
 
-    if (!Number.isFinite(form.longitude)) {
+    if (!hasValidCoordinates(form.latitude, form.longitude)) {
       nextErrors.longitude = t("partnersPage.longitudeRequired");
     }
 
@@ -124,7 +132,13 @@ export default function AddPartner() {
   };
 
   return (
-    <Modal opened onClose={handleClose} title={t("partnersPage.addPartner")} centered>
+    <Modal
+      opened
+      onClose={handleClose}
+      title={t("partnersPage.addPartner")}
+      centered
+      size="xl"
+    >
       <form onSubmit={handleSubmit}>
         <Stack gap="md">
           <TextInput
@@ -161,61 +175,48 @@ export default function AddPartner() {
             required
           />
 
-          <NumberInput
-            label={t("partnersPage.latitude")}
-            value={form.latitude}
-            decimalScale={6}
+          <MapAddressPicker
+            address={form.address_description}
+            latitude={form.latitude}
+            longitude={form.longitude}
+            error={errors.address_description}
             onChange={(value) => {
               setForm((current) => ({
                 ...current,
-                latitude: typeof value === "number" ? value : 0,
+                latitude: value.latitude,
+                longitude: value.longitude,
+                address_description: value.address,
               }));
               setErrors((current) => ({
                 ...current,
                 latitude: undefined,
+                longitude: undefined,
+                address_description: undefined,
                 form: undefined,
               }));
             }}
-            error={errors.latitude}
-            required
           />
 
-          <NumberInput
-            label={t("partnersPage.longitude")}
-            value={form.longitude}
-            decimalScale={6}
-            onChange={(value) => {
-              setForm((current) => ({
-                ...current,
-                longitude: typeof value === "number" ? value : 0,
-              }));
-              setErrors((current) => ({
-                ...current,
-                longitude: undefined,
-                form: undefined,
-              }));
-            }}
-            error={errors.longitude}
-            required
-          />
+          <Group grow>
+            <TextInput
+              label={t("partnersPage.latitude")}
+              value={form.latitude.toFixed(6)}
+              readOnly
+              error={errors.latitude}
+            />
+            <TextInput
+              label={t("partnersPage.longitude")}
+              value={form.longitude.toFixed(6)}
+              readOnly
+              error={errors.longitude}
+            />
+          </Group>
 
           <Textarea
             label={t("partnersPage.address")}
             value={form.address_description}
             minRows={3}
-            onChange={(event) => {
-              const value = event.currentTarget.value;
-
-              setForm((current) => ({
-                ...current,
-                address_description: value,
-              }));
-              setErrors((current) => ({
-                ...current,
-                address_description: undefined,
-                form: undefined,
-              }));
-            }}
+            readOnly
             error={errors.address_description}
             required
           />

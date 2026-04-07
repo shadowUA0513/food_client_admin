@@ -1,7 +1,6 @@
 import {
   ActionIcon,
   Alert,
-  Badge,
   Button,
   Card,
   Center,
@@ -238,9 +237,21 @@ export default function PartnersPage() {
                         <Text c="dimmed">{partner.address_description}</Text>
                       </Table.Td>
                       <Table.Td>
-                        <Badge color="orange" variant="light">
+                        <Text
+                          fw={700}
+                          c="orange.7"
+                          size="xs"
+                          span
+                          style={{
+                            display: "inline-block",
+                            whiteSpace: "nowrap",
+                            padding: "2px 8px",
+                            borderRadius: 999,
+                            background: "var(--mantine-color-orange-0)",
+                          }}
+                        >
                           {partner.latitude}, {partner.longitude}
-                        </Badge>
+                        </Text>
                       </Table.Td>
                       <Table.Td>
                         <Switch checked={partner.is_active} readOnly />

@@ -18,6 +18,7 @@ import {
 import { useDisclosure } from "@mantine/hooks";
 import {
   IconBriefcase,
+  IconChefHat,
   IconLayoutDashboard,
   IconLogout,
   IconMoon,
@@ -43,6 +44,7 @@ export function AdminLayout() {
     { label: t("common.staff"), icon: IconBriefcase, to: "/staff" },
     { label: t("companyDetails.category"), icon: IconLayoutDashboard, to: "/category" },
     { label: t("companyDetails.product"), icon: IconLayoutDashboard, to: "/product" },
+    { label: "Kitchen", icon: IconChefHat, to: "/kitchen" },
     { label: "Clients", icon: IconUsers, to: "/clients" },
   ];
 

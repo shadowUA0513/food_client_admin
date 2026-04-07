@@ -1,7 +1,20 @@
-import type { PropsWithChildren } from "react";
+import { useEffect, type PropsWithChildren } from "react";
+import { AUTH_EXPIRED_EVENT } from "../../service/api/events";
 import { useAuthStore } from "../../store/auth";
 
 export function AuthProvider({ children }: PropsWithChildren) {
+  useEffect(() => {
+    const handleSessionExpired = () => {
+      useAuthStore.getState().logout();
+    };
+
+    window.addEventListener(AUTH_EXPIRED_EVENT, handleSessionExpired);
+
+    return () => {
+      window.removeEventListener(AUTH_EXPIRED_EVENT, handleSessionExpired);
+    };
+  }, []);
+
   return children;
 }
 

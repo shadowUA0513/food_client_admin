@@ -1,4 +1,4 @@
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { AxiosError } from "axios";
 import { useAuthStore } from "../store/auth";
 import type { KitchenOrdersResponse, KitchenPartnerGroup } from "../types/kitchen";
@@ -53,5 +53,37 @@ export function useKitchenOrders(companyId?: string) {
     },
     enabled: Boolean(resolvedCompanyId),
     refetchOnWindowFocus: false,
+  });
+}
+
+type UpdateKitchenOrderStatusPayload = {
+  companyId?: string;
+  order_id: string;
+  status: string;
+};
+
+export function useUpdateKitchenOrderStatus() {
+  return useMutation<void, Error, UpdateKitchenOrderStatusPayload>({
+    mutationFn: async ({ companyId, order_id, status }) => {
+      const resolvedCompanyId = companyId || useAuthStore.getState().company?.id;
+
+      if (!resolvedCompanyId) {
+        throw new Error("Company ID is required.");
+      }
+
+      try {
+        await api.patch(
+          `/api/v1/company/${resolvedCompanyId}/kitchen/order/status`,
+          {
+            order_id,
+            status,
+          }
+        );
+      } catch (error) {
+        throw new Error(
+          getErrorMessage(error, "Failed to update kitchen order status.")
+        );
+      }
+    },
   });
 }

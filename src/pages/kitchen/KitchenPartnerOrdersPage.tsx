@@ -14,11 +14,18 @@ import { useQueryClient } from "@tanstack/react-query";
 import { IconArrowLeft, IconRefresh } from "@tabler/icons-react";
 import { useTranslation } from "react-i18next";
 import { useNavigate, useParams } from "react-router-dom";
-import { useKitchenOrders } from "../../service/kitchen";
+import {
+  useKitchenOrders,
+  useUpdateKitchenOrderStatus,
+} from "../../service/kitchen";
 import { useProducts } from "../../service/products";
 import { useAuthStore } from "../../store/auth";
 import type { KitchenOrder } from "../../types/kitchen";
 import type { Product } from "../../types/products";
+import {
+  showErrorNotification,
+  showSuccessNotification,
+} from "../../utils/notifications";
 
 function formatMoney(value: number) {
   return new Intl.NumberFormat("ru-RU").format(value);
@@ -45,58 +52,116 @@ function getProductMap(products: Product[]) {
 function OrderCard({
   order,
   productMap,
+  addressLabel,
+  commentLabel,
+  closeLabel,
+  closedLabel,
+  onCloseOrder,
+  isClosing,
 }: {
   order: KitchenOrder;
   productMap: Map<string, string>;
+  addressLabel: string;
+  commentLabel: string;
+  closeLabel: string;
+  closedLabel: string;
+  onCloseOrder: (order: KitchenOrder) => void;
+  isClosing: boolean;
 }) {
+  const hasAddress = Boolean(order.delivery_address?.trim());
+  const hasComment = Boolean(order.comment?.trim());
+  const isClosed = order.status.toLowerCase() === "closed";
+
   return (
-    <Card withBorder radius="md" p="sm" style={{ borderWidth: 2 }}>
-      <Stack gap="sm">
+    <Card
+      withBorder
+      radius="lg"
+      p="md"
+      style={{
+        borderWidth: 3,
+      }}
+    >
+      <Stack h={"100%"} gap="md">
         <Group justify="space-between" align="flex-start" wrap="nowrap">
           <div style={{ flex: 1, minWidth: 0 }}>
-            <Text fw={700}>#{order.id.slice(0, 8)}</Text>
-            <Text size="sm" c="dimmed">
+            <Text fw={700} size="lg">
+              #{order.id.slice(0, 8)}
+            </Text>
+            <Text size="xs" c="dimmed">
               {formatDate(order.created_at)}
             </Text>
           </div>
           <Badge
-            color="orange"
+            color="dark"
             variant="light"
-            size="lg"
-            styles={{ root: { whiteSpace: "nowrap", flexShrink: 0, maxWidth: "100%" } }}
+            size="md"
+            styles={{
+              root: { whiteSpace: "nowrap", flexShrink: 0, maxWidth: "100%" },
+            }}
           >
             {formatMoney(order.total_amount)} so'm
           </Badge>
         </Group>
 
-        <div>
-          <Group justify="space-between" mb="xs">
-            <Text fw={600}>Items</Text>
-            <Badge variant="light">{order.items.length}</Badge>
+        <div
+          style={{
+            padding: "12px",
+            borderRadius: "12px",
+            backgroundColor: "rgba(255, 255, 255, 0.04)",
+          }}
+        >
+          <Group justify="space-between" mb="sm">
+            <Text fw={600} size="sm">
+              Items
+            </Text>
+            <Text size="sm" c="dimmed">
+              {order.items.length}
+            </Text>
           </Group>
           <Stack gap="xs">
             {order.items.map((item) => (
               <Group
                 key={item.id}
                 justify="space-between"
-                align="flex-start"
+                align="center"
                 gap="sm"
               >
-                <Text size="sm" style={{ flex: 1 }}>
+                <Text size="sm" style={{ flex: 1 }} lineClamp={2}>
                   {productMap.get(item.product_id) ?? item.product_id}
                 </Text>
-                <Text size="sm" c="dimmed">
-                  x{item.quantity}
+                <Text size="sm" fw={600} c="dimmed">
+                  x {item.quantity}
                 </Text>
               </Group>
             ))}
           </Stack>
         </div>
 
+        {(hasAddress || hasComment) && (
+          <Stack gap="xs">
+            {hasAddress ? (
+              <div>
+                <Text size="xs" fw={600} c="dimmed">
+                  {addressLabel}
+                </Text>
+                <Text size="sm">{order.delivery_address}</Text>
+              </div>
+            ) : null}
+            {hasComment ? (
+              <div>
+                <Text size="xs" fw={600} c="dimmed">
+                  {commentLabel}
+                </Text>
+                <Text size="sm">{order.comment}</Text>
+              </div>
+            ) : null}
+          </Stack>
+        )}
+
         <Group gap="xs" wrap="wrap">
           <Badge
             variant="light"
-            color="gray"
+            color={isClosed ? "green" : "blue"}
             styles={{ root: { whiteSpace: "nowrap" } }}
           >
             {order.status}
@@ -109,6 +174,22 @@ function OrderCard({
             {order.payment_status}
           </Badge>
         </Group>
+
+        <Button
+          mt={"auto"}
+          mb={"xs"}
+          fullWidth
+          radius="md"
+          variant={isClosed ? "default" : "light"}
+          color={isClosed ? "gray" : "orange"}
+          loading={isClosing}
+          disabled={isClosed}
+          onClick={() => {
+            onCloseOrder(order);
+          }}
+        >
+          {isClosed ? closedLabel : closeLabel}
+        </Button>
       </Stack>
     </Card>
   );
@@ -122,12 +203,40 @@ export default function KitchenPartnerOrdersPage() {
   const company = useAuthStore((state) => state.company);
   const { data, error, isLoading, isFetching } = useKitchenOrders(company?.id);
   const { data: productsData } = useProducts(company?.id, 500, 1);
+  const updateOrderStatusMutation = useUpdateKitchenOrderStatus();
 
   const partners = data?.partners ?? [];
   const selectedPartner = partners.find(
     (partner) => partner.partner_id === partnerId,
   );
   const productMap = getProductMap(productsData?.products ?? []);
+
+  const handleCloseOrder = async (order: KitchenOrder) => {
+    if (!company?.id || order.status.toLowerCase() === "closed") {
+      return;
+    }
+
+    try {
+      await updateOrderStatusMutation.mutateAsync({
+        companyId: company.id,
+        order_id: order.id,
+        status: "closed",
+      });
+      await queryClient.invalidateQueries({
+        queryKey: ["kitchen-orders", company.id],
+      });
+      showSuccessNotification({
+        message: t("kitchenPage.closeSuccess"),
+      });
+    } catch (closeError) {
+      showErrorNotification({
+        message:
+          closeError instanceof Error
+            ? closeError.message
+            : t("kitchenPage.closeError"),
+      });
+    }
+  };
 
   return (
     <Stack gap="md">
@@ -206,7 +315,22 @@ export default function KitchenPartnerOrdersPage() {
         ) : (
           <SimpleGrid cols={{ base: 1, sm: 2, lg: 3, xl: 4 }} spacing="sm">
             {selectedPartner.orders.map((order) => (
-              <OrderCard key={order.id} order={order} productMap={productMap} />
+              <OrderCard
+                key={order.id}
+                order={order}
+                productMap={productMap}
+                addressLabel={t("kitchenPage.addressLabel")}
+                commentLabel={t("kitchenPage.commentLabel")}
+                closeLabel={t("kitchenPage.closeOrder")}
+                closedLabel={t("kitchenPage.closedOrder")}
+                onCloseOrder={(currentOrder) => {
+                  void handleCloseOrder(currentOrder);
+                }}
+                isClosing={
+                  updateOrderStatusMutation.isPending &&
+                  updateOrderStatusMutation.variables?.order_id === order.id
+                }
+              />
             ))}
           </SimpleGrid>
         )}
@@ -214,6 +338,3 @@ export default function KitchenPartnerOrdersPage() {
     </Stack>
   );
 }
-
-
-

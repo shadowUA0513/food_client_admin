@@ -14,6 +14,9 @@ export interface KitchenOrder {
   company_id: string;
   partner_id: string;
   user_id: number;
+  phone_number?: string;
+  user_phone?: string;
+  user_phone_number?: string;
   total_amount: number;
   status: string;
   payment_status: string;

@@ -12,11 +12,13 @@ import {
   Title,
 } from "@mantine/core";
 import { useQueryClient } from "@tanstack/react-query";
-import { CLIENTS_COMPANY_ID, useCompanyClients } from "../../service/clients";
+import { useCompanyClients } from "../../service/clients";
+import { useAuthStore } from "../../store/auth";
 
 export default function ClientsPage() {
+  const companyId = useAuthStore((state) => state.company?.id);
   const queryClient = useQueryClient();
-  const { data, error, isLoading, isFetching } = useCompanyClients();
+  const { data, error, isLoading, isFetching } = useCompanyClients(companyId);
   const clients = data?.clients ?? [];
   const totalCount = data?.count ?? 0;
 
@@ -36,7 +38,7 @@ export default function ClientsPage() {
             loading={isFetching}
             onClick={() => {
               void queryClient.invalidateQueries({
-                queryKey: ["company-clients", CLIENTS_COMPANY_ID],
+                queryKey: ["company-clients", companyId],
               });
             }}
           >
@@ -56,7 +58,7 @@ export default function ClientsPage() {
                 variant="light"
                 onClick={() => {
                   void queryClient.invalidateQueries({
-                    queryKey: ["company-clients", CLIENTS_COMPANY_ID],
+                    queryKey: ["company-clients", companyId],
                   });
                 }}
               >

@@ -49,6 +49,10 @@ function getProductMap(products: Product[]) {
   );
 }
 
+function getOrderPhoneNumber(order: KitchenOrder) {
+  return order.phone_number || order.user_phone_number || order.user_phone || "";
+}
+
 function OrderCard({
   order,
   productMap,
@@ -70,6 +74,8 @@ function OrderCard({
 }) {
   const hasAddress = Boolean(order.delivery_address?.trim());
   const hasComment = Boolean(order.comment?.trim());
+  const phoneNumber = getOrderPhoneNumber(order);
+  const hasPhoneNumber = Boolean(phoneNumber.trim());
   const isClosed = order.status.toLowerCase() === "closed";
 
   return (
@@ -152,8 +158,16 @@ function OrderCard({
           </Stack>
         </div>
 
-        {(hasAddress || hasComment) && (
+        {(hasPhoneNumber || hasAddress || hasComment) && (
           <Stack gap="xs">
+            {hasPhoneNumber ? (
+              <div>
+                <Text size="xs" fw={600} c="dimmed">
+                  Phone
+                </Text>
+                <Text size="sm">{phoneNumber}</Text>
+              </div>
+            ) : null}
             {hasAddress ? (
               <div>
                 <Text size="xs" fw={600} c="dimmed">

@@ -1,22 +1,24 @@
 import { useQuery } from "@tanstack/react-query";
 import { AxiosError } from "axios";
+import { useAuthStore } from "../store/auth";
 import type { ClientsResponse } from "../types/clients";
 import { api } from "./api";
-
-export const CLIENTS_COMPANY_ID = "08d016ac-f8a2-4273-8219-806d5dd1fba1";
 
 function getErrorMessage(error: unknown, fallback: string) {
   const axiosError = error as AxiosError<{ message?: string }>;
   return axiosError.response?.data?.message ?? fallback;
 }
 
-export function useCompanyClients(companyId = CLIENTS_COMPANY_ID) {
+export function useCompanyClients(companyId?: string) {
+  const authCompanyId = useAuthStore((state) => state.company?.id);
+  const resolvedCompanyId = companyId || authCompanyId;
+
   return useQuery({
-    queryKey: ["company-clients", companyId],
+    queryKey: ["company-clients", resolvedCompanyId],
     queryFn: async () => {
       try {
         const { data } = await api.get<ClientsResponse>(
-          `/api/v1/company/${companyId}/clients`,
+          `/api/v1/company/${resolvedCompanyId}/clients`,
         );
 
         return {
@@ -27,6 +29,7 @@ export function useCompanyClients(companyId = CLIENTS_COMPANY_ID) {
         throw new Error(getErrorMessage(error, "Failed to load clients."));
       }
     },
+    enabled: Boolean(resolvedCompanyId),
     refetchOnWindowFocus: false,
   });
 }

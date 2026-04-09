@@ -96,7 +96,22 @@ function OrderCard({
             variant="light"
             size="md"
             styles={{
-              root: { whiteSpace: "nowrap", flexShrink: 0, maxWidth: "100%" },
+              root: {
+                whiteSpace: "nowrap",
+                flexShrink: 0,
+                maxWidth: "100%",
+                height: "auto",
+                minHeight: 28,
+                display: "inline-flex",
+                alignItems: "center",
+                overflow: "visible",
+                paddingTop: 4,
+                paddingBottom: 4,
+              },
+              label: {
+                lineHeight: 1.2,
+                overflow: "visible",
+              },
             }}
           >
             {formatMoney(order.total_amount)} so'm
@@ -162,14 +177,44 @@ function OrderCard({
           <Badge
             variant="light"
             color={isClosed ? "green" : "blue"}
-            styles={{ root: { whiteSpace: "nowrap" } }}
+            styles={{
+              root: {
+                whiteSpace: "nowrap",
+                height: "auto",
+                minHeight: 26,
+                display: "inline-flex",
+                alignItems: "center",
+                overflow: "visible",
+                paddingTop: 3,
+                paddingBottom: 3,
+              },
+              label: {
+                lineHeight: 1.2,
+                overflow: "visible",
+              },
+            }}
           >
             {order.status}
           </Badge>
           <Badge
             variant="light"
             color="gray"
-            styles={{ root: { whiteSpace: "nowrap" } }}
+            styles={{
+              root: {
+                whiteSpace: "nowrap",
+                height: "auto",
+                minHeight: 26,
+                display: "inline-flex",
+                alignItems: "center",
+                overflow: "visible",
+                paddingTop: 3,
+                paddingBottom: 3,
+              },
+              label: {
+                lineHeight: 1.2,
+                overflow: "visible",
+              },
+            }}
           >
             {order.payment_status}
           </Badge>

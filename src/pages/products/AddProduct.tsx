@@ -35,7 +35,7 @@ interface FormErrors {
   form?: string;
 }
 
-const MIN_IMAGE_SIZE_BYTES = 200 * 1024;
+const MAX_IMAGE_SIZE_BYTES = 200 * 1024;
 
 const EMPTY_FORM = {
   category_id: "",
@@ -99,17 +99,21 @@ export default function AddProduct() {
       return;
     }
 
-    if (file.size < MIN_IMAGE_SIZE_BYTES) {
+    if (file.size > MAX_IMAGE_SIZE_BYTES) {
       setErrors((current) => ({
         ...current,
         form: t("upload.imageMinSize", {
-          size: formatFileSize(MIN_IMAGE_SIZE_BYTES),
+          size: formatFileSize(MAX_IMAGE_SIZE_BYTES),
         }),
       }));
       return;
     }
 
     try {
+      setErrors((current) => ({
+        ...current,
+        form: undefined,
+      }));
       setIsUploadingImage(true);
       const imageUrl = await uploadImage(file);
 
@@ -318,7 +322,7 @@ export default function AddProduct() {
               isUploadingImage
                 ? t("upload.uploadingImage")
                 : t("upload.imageUploadHint", {
-                    size: formatFileSize(MIN_IMAGE_SIZE_BYTES),
+                    size: formatFileSize(MAX_IMAGE_SIZE_BYTES),
                   })
             }
           />

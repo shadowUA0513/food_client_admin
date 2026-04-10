@@ -56,6 +56,8 @@ function getOrderPhoneNumber(order: KitchenOrder) {
 function OrderCard({
   order,
   productMap,
+  creatorLabel,
+  paymentTypeLabel,
   addressLabel,
   commentLabel,
   closeLabel,
@@ -65,6 +67,8 @@ function OrderCard({
 }: {
   order: KitchenOrder;
   productMap: Map<string, string>;
+  creatorLabel: string;
+  paymentTypeLabel: string;
   addressLabel: string;
   commentLabel: string;
   closeLabel: string;
@@ -72,6 +76,8 @@ function OrderCard({
   onCloseOrder: (order: KitchenOrder) => void;
   isClosing: boolean;
 }) {
+  const hasCreatorName = Boolean(order.creator_name?.trim());
+  const hasPaymentType = Boolean(order.payment_type?.trim());
   const hasAddress = Boolean(order.delivery_address?.trim());
   const hasComment = Boolean(order.comment?.trim());
   const phoneNumber = getOrderPhoneNumber(order);
@@ -158,8 +164,24 @@ function OrderCard({
           </Stack>
         </div>
 
-        {(hasPhoneNumber || hasAddress || hasComment) && (
+        {(hasCreatorName || hasPaymentType || hasPhoneNumber || hasAddress || hasComment) && (
           <Stack gap="xs">
+            {hasCreatorName ? (
+              <div>
+                <Text size="xs" fw={600} c="dimmed">
+                  {creatorLabel}
+                </Text>
+                <Text size="sm">{order.creator_name}</Text>
+              </div>
+            ) : null}
+            {hasPaymentType ? (
+              <div>
+                <Text size="xs" fw={600} c="dimmed">
+                  {paymentTypeLabel}
+                </Text>
+                <Text size="sm">{order.payment_type}</Text>
+              </div>
+            ) : null}
             {hasPhoneNumber ? (
               <div>
                 <Text size="xs" fw={600} c="dimmed">
@@ -378,6 +400,8 @@ export default function KitchenPartnerOrdersPage() {
                 key={order.id}
                 order={order}
                 productMap={productMap}
+                creatorLabel={t("kitchenPage.creatorLabel")}
+                paymentTypeLabel={t("kitchenPage.paymentTypeLabel")}
                 addressLabel={t("kitchenPage.addressLabel")}
                 commentLabel={t("kitchenPage.commentLabel")}
                 closeLabel={t("kitchenPage.closeOrder")}

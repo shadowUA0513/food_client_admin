@@ -16,6 +16,7 @@ import LoginPage from "../../pages/login/LoginPage";
 import AddStaff from "../../pages/staff/AddStaff";
 import EditStaff from "../../pages/staff/EditStaff";
 import StaffPage from "../../pages/staff/StaffPage";
+import WorkingHoursPage from "../../pages/working-hours/WorkingHoursPage";
 import { AdminLayout } from "../layouts/AdminLayout";
 import { useAuth } from "../providers/AuthProvider";
 import { ProtectedRoute } from "./ProtectedRoute";
@@ -53,6 +54,7 @@ export function AppRouter() {
               <Route path="edit/:productId" element={<EditProduct />} />
             </Route>
             <Route path="/clients" element={<ClientsPage />} />
+            <Route path="/working-hours" element={<WorkingHoursPage />} />
             <Route path="/kitchen">
               <Route index element={<KitchenPage />} />
               <Route path=":partnerId" element={<KitchenPartnerOrdersPage />} />

@@ -15,6 +15,7 @@ import {
   Title,
 } from "@mantine/core";
 import { useQueryClient } from "@tanstack/react-query";
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useFinancialStats, type FinancialPartnerStat } from "../../service/dashboard";
 import { useAuthStore } from "../../store/auth";
@@ -61,6 +62,8 @@ function MetricBar({
   percent: number;
   color: string;
 }) {
+  const [isHovered, setIsHovered] = useState(false);
+
   return (
     <div>
       <Group justify="space-between" mb={8} wrap="nowrap">
@@ -73,10 +76,18 @@ function MetricBar({
       </Group>
       <div
         style={{
+          position: "relative",
           height: 12,
           borderRadius: 999,
           backgroundColor: "rgba(255,255,255,0.08)",
           overflow: "hidden",
+        }}
+        title={`${percent}%`}
+        onMouseEnter={() => {
+          setIsHovered(true);
+        }}
+        onMouseLeave={() => {
+          setIsHovered(false);
         }}
       >
         <div
@@ -87,6 +98,21 @@ function MetricBar({
             background: color,
           }}
         />
+        <Text
+          size="xs"
+          fw={700}
+          style={{
+            position: "absolute",
+            top: -24,
+            right: 0,
+            opacity: isHovered ? 1 : 0,
+            pointerEvents: "none",
+            transition: "opacity 150ms ease",
+            color: "var(--mantine-color-white)",
+          }}
+        >
+          {percent}%
+        </Text>
       </div>
     </div>
   );

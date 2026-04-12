@@ -33,6 +33,7 @@ interface FormErrors {
   name_ru?: string;
   description?: string;
   price?: string;
+  discounted_price?: string;
   stock_quantity?: string;
   form?: string;
 }
@@ -46,6 +47,7 @@ const EMPTY_FORM: UpdateProductPayload = {
   name_ru: "",
   description: "",
   price: 0,
+  discounted_price: 0,
   image_url: "",
   stock_quantity: 0,
   is_available: true,
@@ -93,6 +95,7 @@ export default function EditProduct() {
         name_ru: product.name_ru,
         description: product.description,
         price: product.price,
+        discounted_price: product.discounted_price ?? 0,
         image_url: product.image_url,
         stock_quantity: product.stock_quantity,
         is_available: product.is_available,
@@ -189,6 +192,10 @@ export default function EditProduct() {
       nextErrors.price = t("companyDetails.productPriceRequired");
     }
 
+    if (!Number.isFinite(form.discounted_price) || form.discounted_price < 0) {
+      nextErrors.discounted_price = t("companyDetails.productDiscountedPriceInvalid");
+    }
+
     if (!Number.isFinite(form.stock_quantity) || form.stock_quantity < 0) {
       nextErrors.stock_quantity = t("companyDetails.productStockRequired");
     }
@@ -214,6 +221,7 @@ export default function EditProduct() {
           name_ru: form.name_ru.trim(),
           description: form.description.trim(),
           price: Number(form.price),
+          discounted_price: Number(form.discounted_price),
           image_url: form.image_url.trim(),
           stock_quantity: Number(form.stock_quantity),
           is_available: form.is_available,
@@ -359,6 +367,24 @@ export default function EditProduct() {
               min={0}
               error={errors.price}
               required
+            />
+
+            <NumberInput
+              label={t("companyDetails.discountedPrice")}
+              value={form.discounted_price}
+              onChange={(value) => {
+                setForm((current) => ({
+                  ...current,
+                  discounted_price: typeof value === "number" ? value : 0,
+                }));
+                setErrors((current) => ({
+                  ...current,
+                  discounted_price: undefined,
+                  form: undefined,
+                }));
+              }}
+              min={0}
+              error={errors.discounted_price}
             />
 
             <FileInput

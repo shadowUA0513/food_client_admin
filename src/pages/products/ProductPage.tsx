@@ -29,7 +29,11 @@ import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Outlet, useNavigate } from "react-router-dom";
 import { useCategories } from "../../service/categories";
-import { useDeleteProduct, useProducts } from "../../service/products";
+import {
+  useDeleteProduct,
+  useProducts,
+  useUpdateProduct,
+} from "../../service/products";
 import { useAuthStore } from "../../store/auth";
 import type { Product } from "../../types/products";
 import {
@@ -50,33 +54,38 @@ export default function ProductPage() {
   const [categoryId, setCategoryId] = useState<string | null>(null);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [updatingAvailabilityId, setUpdatingAvailabilityId] = useState<
+    string | null
+  >(null);
   const [deleteOpened, { open: openDelete, close: closeDelete }] =
     useDisclosure(false);
 
   const { data: categoriesData } = useCategories(companyId, 1000, 1, "");
-  const {
-    data,
-    isLoading,
-    error,
-  } = useProducts(
+  const { data, isLoading, error } = useProducts(
     companyId,
     ITEMS_PER_PAGE,
     page,
     debouncedSearch.trim(),
-    categoryId
+    categoryId,
   );
   const deleteProductMutation = useDeleteProduct();
+  const updateProductMutation = useUpdateProduct();
 
   const products = data?.products ?? [];
   const totalCount = data?.count ?? 0;
   const totalPages = Math.max(1, Math.ceil(totalCount / ITEMS_PER_PAGE));
   const categoryMap = new Map(
-    (categoriesData?.categories ?? []).map((category) => [category.id, category])
+    (categoriesData?.categories ?? []).map((category) => [
+      category.id,
+      category,
+    ]),
   );
-  const categoryOptions = (categoriesData?.categories ?? []).map((category) => ({
-    value: category.id,
-    label: `${category.name_uz} / ${category.name_ru}`,
-  }));
+  const categoryOptions = (categoriesData?.categories ?? []).map(
+    (category) => ({
+      value: category.id,
+      label: `${category.name_uz} / ${category.name_ru}`,
+    }),
+  );
 
   useEffect(() => {
     setPage(1);
@@ -106,7 +115,9 @@ export default function ProductPage() {
     try {
       setDeletingId(selectedProduct.id);
       await deleteProductMutation.mutateAsync(selectedProduct.id);
-      await queryClient.invalidateQueries({ queryKey: ["products", companyId] });
+      await queryClient.invalidateQueries({
+        queryKey: ["products", companyId],
+      });
       await queryClient.invalidateQueries({
         queryKey: ["product", companyId, selectedProduct.id],
       });
@@ -123,6 +134,48 @@ export default function ProductPage() {
       });
     } finally {
       setDeletingId(null);
+    }
+  };
+
+  const handleAvailabilityChange = async (
+    product: Product,
+    isAvailable: boolean,
+  ) => {
+    try {
+      setUpdatingAvailabilityId(product.id);
+      await updateProductMutation.mutateAsync({
+        id: product.id,
+        payload: {
+          company_id: product.company_id,
+          category_id: product.category_id,
+          name_ru: product.name_ru,
+          name_uz: product.name_uz,
+          description: product.description,
+          price: product.price,
+          discounted_price: product.discounted_price ?? 0,
+          image_url: product.image_url,
+          stock_quantity: product.stock_quantity,
+          is_available: isAvailable,
+        },
+      });
+      await queryClient.invalidateQueries({
+        queryKey: ["products", companyId],
+      });
+      await queryClient.invalidateQueries({
+        queryKey: ["product", companyId, product.id],
+      });
+      showSuccessNotification({
+        message: t("companyDetails.productUpdateSuccess"),
+      });
+    } catch (updateError) {
+      showErrorNotification({
+        message:
+          updateError instanceof Error
+            ? updateError.message
+            : t("companyDetails.productUpdateError"),
+      });
+    } finally {
+      setUpdatingAvailabilityId(null);
     }
   };
 
@@ -238,89 +291,106 @@ export default function ProductPage() {
           </Center>
         ) : (
           <>
-            <Table highlightOnHover verticalSpacing="md">
-              <Table.Thead>
-                <Table.Tr>
-                  <Table.Th>{t("companyDetails.productNameUz")}</Table.Th>
-                  <Table.Th>{t("companyDetails.productNameRu")}</Table.Th>
-                  <Table.Th>{t("companyDetails.categoryTitle")}</Table.Th>
-                  <Table.Th>{t("companyDetails.price")}</Table.Th>
-                  <Table.Th>{t("companyDetails.productStockQuantity")}</Table.Th>
-                  <Table.Th>{t("companyDetails.productAvailable")}</Table.Th>
-                  <Table.Th>{t("staffPage.actions")}</Table.Th>
-                </Table.Tr>
-              </Table.Thead>
-              <Table.Tbody>
-                {products.length ? (
-                  products.map((product) => (
-                    <Table.Tr key={product.id}>
-                      <Table.Td>
-                        <Text fw={600}>{product.name_uz}</Text>
-                      </Table.Td>
-                      <Table.Td>
-                        <Text c="dimmed">{product.name_ru}</Text>
-                      </Table.Td>
-                      <Table.Td>
-                        <Text c="dimmed">
-                          {categoryMap.get(product.category_id)?.name_uz ??
-                            product.category_id}
+            <Table.ScrollContainer minWidth={1100}>
+              <Table highlightOnHover verticalSpacing="md">
+                <Table.Thead>
+                  <Table.Tr>
+                    <Table.Th>{t("companyDetails.productNameUz")}</Table.Th>
+                    <Table.Th>{t("companyDetails.productNameRu")}</Table.Th>
+                    <Table.Th>{t("companyDetails.categoryTitle")}</Table.Th>
+                    <Table.Th>{t("companyDetails.price")}</Table.Th>
+                    <Table.Th>{t("companyDetails.discountedPrice")}</Table.Th>
+                    <Table.Th style={{ minWidth: 110 }}>
+                      {t("companyDetails.productStockQuantity")}
+                    </Table.Th>
+                    <Table.Th>{t("companyDetails.productAvailable")}</Table.Th>
+                    <Table.Th>{t("staffPage.actions")}</Table.Th>
+                  </Table.Tr>
+                </Table.Thead>
+                <Table.Tbody>
+                  {products.length ? (
+                    products.map((product) => (
+                      <Table.Tr key={product.id}>
+                        <Table.Td>
+                          <Text fw={600}>{product.name_uz}</Text>
+                        </Table.Td>
+                        <Table.Td>
+                          <Text c="dimmed">{product.name_ru}</Text>
+                        </Table.Td>
+                        <Table.Td>
+                          <Text c="dimmed">
+                            {categoryMap.get(product.category_id)?.name_uz ??
+                              product.category_id}
+                          </Text>
+                        </Table.Td>
+                        <Table.Td>
+                          <Badge color="orange" variant="light">
+                            {product.price}
+                          </Badge>
+                        </Table.Td>
+                        <Table.Td>
+                          <Badge color="grape" variant="light">
+                            {product.discounted_price ?? 0}
+                          </Badge>
+                        </Table.Td>
+                        <Table.Td style={{ minWidth: 110 }}>
+                          <Badge color="blue" variant="light">
+                            {product.stock_quantity}
+                          </Badge>
+                        </Table.Td>
+                        <Table.Td>
+                          <Switch
+                            checked={product.is_available}
+                            disabled={updatingAvailabilityId === product.id}
+                            onChange={(event) => {
+                              const isChecked = event.currentTarget.checked;
+
+                              void handleAvailabilityChange(product, isChecked);
+                            }}
+                          />
+                        </Table.Td>
+                        <Table.Td>
+                          <Group gap="xs" wrap="nowrap">
+                            <ActionIcon
+                              variant="light"
+                              color="blue"
+                              aria-label={t("companyDetails.editProduct")}
+                              onClick={() => {
+                                navigate(`/product/edit/${product.id}`, {
+                                  state: { product },
+                                });
+                              }}
+                            >
+                              <IconPencil size={18} />
+                            </ActionIcon>
+                            <ActionIcon
+                              variant="light"
+                              color="red"
+                              aria-label={t("companyDetails.deleteProduct")}
+                              title={t("companyDetails.deleteProduct")}
+                              disabled={deleteProductMutation.isPending}
+                              onClick={() => {
+                                handleOpenDelete(product);
+                              }}
+                            >
+                              <IconTrash size={18} />
+                            </ActionIcon>
+                          </Group>
+                        </Table.Td>
+                      </Table.Tr>
+                    ))
+                  ) : (
+                    <Table.Tr>
+                      <Table.Td colSpan={8}>
+                        <Text c="dimmed" ta="center" py="md">
+                          {t("companyDetails.noProductsFound")}
                         </Text>
                       </Table.Td>
-                      <Table.Td>
-                        <Badge color="orange" variant="light">
-                          {product.price}
-                        </Badge>
-                      </Table.Td>
-                      <Table.Td>
-                        <Badge color="blue" variant="light">
-                          {product.stock_quantity}
-                        </Badge>
-                      </Table.Td>
-                      <Table.Td>
-                        <Switch checked={product.is_available} readOnly />
-                      </Table.Td>
-                      <Table.Td>
-                        <Group gap="xs" wrap="nowrap">
-                          <ActionIcon
-                            variant="light"
-                            color="blue"
-                            aria-label={t("companyDetails.editProduct")}
-                            onClick={() => {
-                              navigate(
-                                `/product/edit/${product.id}`,
-                                { state: { product } }
-                              );
-                            }}
-                          >
-                            <IconPencil size={18} />
-                          </ActionIcon>
-                          <ActionIcon
-                            variant="light"
-                            color="red"
-                            aria-label={t("companyDetails.deleteProduct")}
-                            title={t("companyDetails.deleteProduct")}
-                            disabled={deleteProductMutation.isPending}
-                            onClick={() => {
-                              handleOpenDelete(product);
-                            }}
-                          >
-                            <IconTrash size={18} />
-                          </ActionIcon>
-                        </Group>
-                      </Table.Td>
                     </Table.Tr>
-                  ))
-                ) : (
-                  <Table.Tr>
-                    <Table.Td colSpan={7}>
-                      <Text c="dimmed" ta="center" py="md">
-                        {t("companyDetails.noProductsFound")}
-                      </Text>
-                    </Table.Td>
-                  </Table.Tr>
-                )}
-              </Table.Tbody>
-            </Table>
+                  )}
+                </Table.Tbody>
+              </Table>
+            </Table.ScrollContainer>
 
             <Group justify="space-between" mt="lg">
               <Text size="sm" c="dimmed">

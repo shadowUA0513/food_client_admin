@@ -6,6 +6,7 @@ export interface Product {
   name_ru: string;
   description: string;
   price: number;
+  discounted_price: number;
   image_url: string;
   stock_quantity: number;
   is_available: boolean;
@@ -20,6 +21,7 @@ export interface CreateProductPayload {
   name_uz: string;
   description: string;
   price: number;
+  discounted_price: number;
   image_url: string;
   stock_quantity: number;
   is_available: boolean;

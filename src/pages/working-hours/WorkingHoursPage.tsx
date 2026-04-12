@@ -16,7 +16,10 @@ import { useQueryClient } from "@tanstack/react-query";
 import { IconPlus, IconRefresh, IconTrash } from "@tabler/icons-react";
 import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { useWorkingHours, useUpdateWorkingHours } from "../../service/workingHours";
+import {
+  useWorkingHours,
+  useUpdateWorkingHours,
+} from "../../service/workingHours";
 import { useAuthStore } from "../../store/auth";
 import type { WorkingHour } from "../../types/workingHours";
 import {
@@ -39,15 +42,24 @@ function getDayLabel(day: number, t: ReturnType<typeof useTranslation>["t"]) {
 function sortWorkingHours(hours: WorkingHour[]) {
   return [...hours].sort(
     (left, right) =>
-      DAY_ORDER.indexOf(left.day_of_week) - DAY_ORDER.indexOf(right.day_of_week),
+      DAY_ORDER.indexOf(left.day_of_week) -
+      DAY_ORDER.indexOf(right.day_of_week),
   );
 }
 
 function normalizeWorkingHours(hours: WorkingHour[]) {
   return sortWorkingHours(hours).map((hour) => ({
     day_of_week: hour.day_of_week,
-    start_time: hour.start_time || (hour.day_of_week === 6 || hour.day_of_week === 0 ? DEFAULT_WEEKEND_START : DEFAULT_DAY_START),
-    end_time: hour.end_time || (hour.day_of_week === 6 || hour.day_of_week === 0 ? DEFAULT_WEEKEND_END : DEFAULT_DAY_END),
+    start_time:
+      hour.start_time ||
+      (hour.day_of_week === 6 || hour.day_of_week === 0
+        ? DEFAULT_WEEKEND_START
+        : DEFAULT_DAY_START),
+    end_time:
+      hour.end_time ||
+      (hour.day_of_week === 6 || hour.day_of_week === 0
+        ? DEFAULT_WEEKEND_END
+        : DEFAULT_DAY_END),
     is_active: Boolean(hour.is_active),
   }));
 }
@@ -86,12 +98,13 @@ export default function WorkingHoursPage() {
   const nextDay = DAY_ORDER.find((day) => !usedDays.has(day));
   const canAddDay = nextDay !== undefined;
 
-  const updateRow = (day: number, updater: (current: WorkingHour) => WorkingHour) => {
+  const updateRow = (
+    day: number,
+    updater: (current: WorkingHour) => WorkingHour,
+  ) => {
     setRows((current) =>
       sortWorkingHours(
-        current.map((row) =>
-          row.day_of_week === day ? updater(row) : row,
-        ),
+        current.map((row) => (row.day_of_week === day ? updater(row) : row)),
       ),
     );
     setErrors((current) => ({
@@ -108,7 +121,9 @@ export default function WorkingHoursPage() {
       return;
     }
 
-    setRows((current) => sortWorkingHours([...current, createDefaultWorkingHour(nextDay)]));
+    setRows((current) =>
+      sortWorkingHours([...current, createDefaultWorkingHour(nextDay)]),
+    );
   };
 
   const handleRemoveDay = (day: number) => {
@@ -260,9 +275,7 @@ export default function WorkingHoursPage() {
                   <Card key={row.day_of_week} withBorder radius="lg" p="md">
                     <Stack gap="sm">
                       <Group justify="space-between" align="center">
-                        <Text fw={700}>
-                          {getDayLabel(row.day_of_week, t)}
-                        </Text>
+                        <Text fw={700}>{getDayLabel(row.day_of_week, t)}</Text>
                         <ActionIcon
                           variant="light"
                           color="red"
@@ -293,9 +306,11 @@ export default function WorkingHoursPage() {
                           label={t("workingHours.startTime")}
                           value={row.start_time}
                           onChange={(event) => {
+                            const value = event.currentTarget.value;
+
                             updateRow(row.day_of_week, (current) => ({
                               ...current,
-                              start_time: event.currentTarget.value,
+                              start_time: value,
                             }));
                           }}
                           error={errors[row.day_of_week]?.start_time}
@@ -306,9 +321,11 @@ export default function WorkingHoursPage() {
                           label={t("workingHours.endTime")}
                           value={row.end_time}
                           onChange={(event) => {
+                            const value = event.currentTarget.value;
+
                             updateRow(row.day_of_week, (current) => ({
                               ...current,
-                              end_time: event.currentTarget.value,
+                              end_time: value,
                             }));
                           }}
                           error={errors[row.day_of_week]?.end_time}

@@ -56,6 +56,8 @@ function getOrderPhoneNumber(order: KitchenOrder) {
 function OrderCard({
   order,
   productMap,
+  itemsLabel,
+  phoneLabel,
   creatorLabel,
   paymentTypeLabel,
   addressLabel,
@@ -67,6 +69,8 @@ function OrderCard({
 }: {
   order: KitchenOrder;
   productMap: Map<string, string>;
+  itemsLabel: string;
+  phoneLabel: string;
   creatorLabel: string;
   paymentTypeLabel: string;
   addressLabel: string;
@@ -139,7 +143,7 @@ function OrderCard({
         >
           <Group justify="space-between" mb="sm">
             <Text fw={600} size="sm">
-              Items
+              {itemsLabel}
             </Text>
             <Text size="sm" c="dimmed">
               {order.items.length}
@@ -185,7 +189,7 @@ function OrderCard({
             {hasPhoneNumber ? (
               <div>
                 <Text size="xs" fw={600} c="dimmed">
-                  Phone
+                  {phoneLabel}
                 </Text>
                 <Text size="sm">{phoneNumber}</Text>
               </div>
@@ -356,7 +360,7 @@ export default function KitchenPartnerOrdersPage() {
         {error ? (
           <Stack gap="md">
             <Alert color="red" variant="light">
-              {error.message || "Failed to load kitchen orders."}
+              {error.message || t("kitchenPage.loadError")}
             </Alert>
             <Group justify="flex-end">
               <Button
@@ -400,6 +404,8 @@ export default function KitchenPartnerOrdersPage() {
                 key={order.id}
                 order={order}
                 productMap={productMap}
+                itemsLabel={t("kitchenPage.itemsLabel")}
+                phoneLabel={t("kitchenPage.phoneLabel")}
                 creatorLabel={t("kitchenPage.creatorLabel")}
                 paymentTypeLabel={t("kitchenPage.paymentTypeLabel")}
                 addressLabel={t("kitchenPage.addressLabel")}

@@ -52,6 +52,7 @@ export default function EditStaff() {
     error,
   } = useStaffUserById(staffId);
   const staff = locationStaff ?? fetchedStaff;
+  const isLegacySuperAdmin = staff?.role === "super_admin";
   const [errors, setErrors] = useState<FormErrors>({});
   const [form, setForm] = useState<UpdateStaffPayload>({
     full_name: "",
@@ -231,6 +232,12 @@ export default function EditStaff() {
             error={errors.password}
           />
 
+          {isLegacySuperAdmin ? (
+            <Alert color="blue" variant="light">
+              {t("staffPage.legacySuperAdminHelp")}
+            </Alert>
+          ) : null}
+
           <Select
             label={t("staffPage.roleLabel")}
             value={form.role}
@@ -249,7 +256,15 @@ export default function EditStaff() {
             }}
             data={[
               { value: "admin", label: t("staffPage.adminRole") },
-              { value: "super_admin", label: t("staffPage.superAdminRole") },
+              ...(isLegacySuperAdmin
+                ? [
+                    {
+                      value: "super_admin",
+                      label: t("staffPage.superAdminRole"),
+                      disabled: true,
+                    },
+                  ]
+                : []),
             ]}
             error={errors.role}
             allowDeselect={false}

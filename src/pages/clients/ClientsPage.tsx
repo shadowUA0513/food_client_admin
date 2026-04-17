@@ -12,10 +12,12 @@ import {
   Title,
 } from "@mantine/core";
 import { useQueryClient } from "@tanstack/react-query";
+import { useTranslation } from "react-i18next";
 import { useCompanyClients } from "../../service/clients";
 import { useAuthStore } from "../../store/auth";
 
 export default function ClientsPage() {
+  const { t } = useTranslation();
   const companyId = useAuthStore((state) => state.company?.id);
   const queryClient = useQueryClient();
   const { data, error, isLoading, isFetching } = useCompanyClients(companyId);
@@ -26,12 +28,12 @@ export default function ClientsPage() {
     <Stack gap="lg">
       <Group justify="space-between" align="flex-start">
         <div>
-          <Title order={3}>Clients</Title>
-          <Text c="dimmed">Company clients list.</Text>
+          <Title order={3}>{t("clientsPage.title")}</Title>
+          <Text c="dimmed">{t("clientsPage.subtitle")}</Text>
         </div>
         <Group gap="sm">
           <Badge color="orange" variant="light" size="lg">
-            {totalCount} clients
+            {t("clientsPage.clientsCount", { count: totalCount })}
           </Badge>
           <Button
             variant="light"
@@ -42,7 +44,7 @@ export default function ClientsPage() {
               });
             }}
           >
-            Refresh
+            {t("commonActions.refresh")}
           </Button>
         </Group>
       </Group>
@@ -51,7 +53,7 @@ export default function ClientsPage() {
         {error ? (
           <Stack gap="md">
             <Alert color="red" variant="light">
-              {error.message || "Failed to load clients."}
+              {error.message || t("clientsPage.loadError")}
             </Alert>
             <Group justify="flex-end">
               <Button
@@ -62,7 +64,7 @@ export default function ClientsPage() {
                   });
                 }}
               >
-                Retry
+                {t("commonActions.retry")}
               </Button>
             </Group>
           </Stack>
@@ -70,22 +72,22 @@ export default function ClientsPage() {
           <Center py="xl">
             <Stack align="center" gap="sm">
               <Loader />
-              <Text c="dimmed">Loading clients...</Text>
+              <Text c="dimmed">{t("clientsPage.loading")}</Text>
             </Stack>
           </Center>
         ) : !clients.length ? (
           <Center py="xl">
-            <Text c="dimmed">No clients found.</Text>
+            <Text c="dimmed">{t("clientsPage.empty")}</Text>
           </Center>
         ) : (
           <Table highlightOnHover verticalSpacing="md">
             <Table.Thead>
               <Table.Tr>
-                <Table.Th>Full name</Table.Th>
-                <Table.Th>Username</Table.Th>
-                <Table.Th>Phone</Table.Th>
-                <Table.Th>Language</Table.Th>
-                <Table.Th>Created at</Table.Th>
+                <Table.Th>{t("clientsPage.fullName")}</Table.Th>
+                <Table.Th>{t("clientsPage.username")}</Table.Th>
+                <Table.Th>{t("clientsPage.phone")}</Table.Th>
+                <Table.Th>{t("clientsPage.language")}</Table.Th>
+                <Table.Th>{t("clientsPage.createdAt")}</Table.Th>
               </Table.Tr>
             </Table.Thead>
             <Table.Tbody>

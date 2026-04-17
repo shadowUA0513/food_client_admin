@@ -28,21 +28,31 @@ export interface FinancialStatsResponse {
   };
 }
 
+interface UseFinancialStatsOptions {
+  companyId?: string;
+  startDate?: string;
+  endDate?: string;
+}
+
 function getErrorMessage(error: unknown, fallback: string) {
   const axiosError = error as AxiosError<{ message?: string }>;
   return axiosError.response?.data?.message ?? fallback;
 }
 
 export function useFinancialStats(
-  startDate = "2026-04-06",
-  endDate = "2026-04-07",
-  companyId?: string,
+  options: UseFinancialStatsOptions = {},
 ) {
+  const { companyId, startDate, endDate } = options;
   const authCompanyId = useAuthStore((state) => state.company?.id);
   const resolvedCompanyId = companyId || authCompanyId;
 
   return useQuery({
-    queryKey: ["financial-stats", resolvedCompanyId, startDate, endDate],
+    queryKey: [
+      "financial-stats",
+      resolvedCompanyId,
+      startDate ?? null,
+      endDate ?? null,
+    ],
     queryFn: async () => {
       if (!resolvedCompanyId) {
         throw new Error("Company ID is required.");
@@ -52,10 +62,13 @@ export function useFinancialStats(
         const { data } = await api.get<FinancialStatsResponse>(
           `/api/v1/company/${resolvedCompanyId}/financial-stats`,
           {
-            params: {
-              start_date: startDate,
-              end_date: endDate,
-            },
+            params:
+              startDate && endDate
+                ? {
+                    start_date: startDate,
+                    end_date: endDate,
+                  }
+                : undefined,
           },
         );
 

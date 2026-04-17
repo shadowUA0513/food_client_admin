@@ -38,7 +38,7 @@ export default function KitchenPage() {
         </div>
         <Group gap="sm">
           <Badge color="orange" variant="light">
-            {partners.length} partners
+            {t("kitchenPage.partnersCount", { count: partners.length })}
           </Badge>
           <Button
             variant="light"
@@ -59,7 +59,7 @@ export default function KitchenPage() {
         {error ? (
           <Stack gap="md">
             <Alert color="red" variant="light">
-              {error.message || "Failed to load kitchen orders."}
+              {error.message || t("kitchenPage.loadError")}
             </Alert>
             <Group justify="flex-end">
               <Button
@@ -108,7 +108,7 @@ export default function KitchenPage() {
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <Text fw={700}>{partner.partner_name}</Text>
                       <Text size="sm" c="dimmed">
-                        Partner
+                        {t("kitchenPage.partnerLabel")}
                       </Text>
                     </div>
                     <Badge
@@ -117,7 +117,9 @@ export default function KitchenPage() {
                       size="lg"
                       styles={{ root: { whiteSpace: "nowrap", flexShrink: 0, maxWidth: "100%" } }}
                     >
-                      {partner.order_count} orders
+                      {t("kitchenPage.ordersCount", {
+                        count: partner.order_count,
+                      })}
                     </Badge>
                   </Group>
 

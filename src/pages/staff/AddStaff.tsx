@@ -107,7 +107,7 @@ export default function AddStaff() {
         queryKey: ["staff-users", companyId],
       });
       showSuccessNotification({
-        message: "Staff member created successfully.",
+        message: t("staffPage.createSuccess"),
       });
       handleClose();
     } catch (createError) {
@@ -198,7 +198,7 @@ export default function AddStaff() {
             label={t("staffPage.roleLabel")}
             value={form.role}
             onChange={(value) => {
-              if (value === "admin" || value === "super_admin") {
+              if (value === "admin") {
                 setForm((current) => ({
                   ...current,
                   role: value as StaffRole,
@@ -210,10 +210,7 @@ export default function AddStaff() {
                 form: undefined,
               }));
             }}
-            data={[
-              { value: "admin", label: t("staffPage.adminRole") },
-              { value: "super_admin", label: t("staffPage.superAdminRole") },
-            ]}
+            data={[{ value: "admin", label: t("staffPage.adminRole") }]}
             error={errors.role}
             allowDeselect={false}
             required

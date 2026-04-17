@@ -14,10 +14,15 @@ import {
   Text,
   Title,
 } from "@mantine/core";
+import { DatePickerInput } from "@mantine/dates";
+import { IconCalendar } from "@tabler/icons-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { useFinancialStats, type FinancialPartnerStat } from "../../service/dashboard";
+import {
+  useFinancialStats,
+  type FinancialPartnerStat,
+} from "../../service/dashboard";
 import { useAuthStore } from "../../store/auth";
 
 function formatMoney(value: number) {
@@ -32,13 +37,7 @@ function getPercent(value: number, total: number) {
   return Math.round((value / total) * 100);
 }
 
-function StatCard({
-  label,
-  value,
-}: {
-  label: string;
-  value: string | number;
-}) {
+function StatCard({ label, value }: { label: string; value: string | number }) {
   return (
     <Card withBorder radius="xl" p="lg">
       <Text c="dimmed" size="sm">
@@ -126,27 +125,54 @@ function getMaxOrders(partners: FinancialPartnerStat[]) {
   return Math.max(...partners.map((partner) => partner.order_count), 0);
 }
 
+function formatDateParam(value: string | null) {
+  if (!value) {
+    return undefined;
+  }
+
+  return value;
+}
+
 export default function DashboardPage() {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
   const company = useAuthStore((state) => state.company);
-  const startDate = "2026-04-06";
-  const endDate = "2026-04-07";
+  const [selectedDateRange, setSelectedDateRange] = useState<
+    [string | null, string | null]
+  >([null, null]);
+  const startDateParam = formatDateParam(selectedDateRange[0]);
+  const endDateParam = formatDateParam(selectedDateRange[1]);
   const {
     data: financialStats,
     error: financialStatsError,
     isLoading: isFinancialStatsLoading,
     isFetching: isFinancialStatsFetching,
-  } = useFinancialStats(startDate, endDate, company?.id);
+  } = useFinancialStats({
+    companyId: company?.id,
+    startDate: startDateParam,
+    endDate: endDateParam,
+  });
   const partners = financialStats?.data.partners ?? [];
   const totals = financialStats?.data.grand_total;
   const maxRevenue = getMaxRevenue(partners);
   const maxOrders = getMaxOrders(partners);
   const paymentSections = totals
     ? [
-        { label: "Cash", value: totals.total_cash, color: "#f08c00" },
-        { label: "Click", value: totals.total_click, color: "#15aabf" },
-        { label: "Payme", value: totals.total_payme, color: "#7c3aed" },
+        {
+          label: t("dashboard.cash"),
+          value: totals.total_cash,
+          color: "#f08c00",
+        },
+        {
+          label: t("dashboard.click"),
+          value: totals.total_click,
+          color: "#15aabf",
+        },
+        {
+          label: t("dashboard.payme"),
+          value: totals.total_payme,
+          color: "#7c3aed",
+        },
       ]
     : [];
 
@@ -157,26 +183,38 @@ export default function DashboardPage() {
           <div>
             <Title order={2}>{t("common.dashboard")}</Title>
             <Text c="dimmed" mt={6}>
-              Financial statistics by partner office for the selected period.
+              {t("dashboard.subtitle")}
             </Text>
           </div>
           <Group gap="sm">
+            <DatePickerInput
+              type="range"
+              value={selectedDateRange}
+              onChange={setSelectedDateRange}
+              leftSection={<IconCalendar size={16} />}
+              placeholder={t("dashboard.pickDatesRange")}
+              clearable
+              valueFormat="DD.MM.YYYY"
+              maxDate={new Date()}
+            />
             <Badge variant="light" color="gray" size="lg">
-              {company?.name ?? "No company"}
-            </Badge>
-            <Badge variant="light" color="orange" size="lg">
-              {startDate} to {endDate}
+              {company?.name ?? t("dashboard.noCompany")}
             </Badge>
             <Button
               variant="light"
               loading={isFinancialStatsFetching}
               onClick={() => {
                 void queryClient.invalidateQueries({
-                  queryKey: ["financial-stats", company?.id, startDate, endDate],
+                  queryKey: [
+                    "financial-stats",
+                    company?.id,
+                    startDateParam ?? null,
+                    endDateParam ?? null,
+                  ],
                 });
               }}
             >
-              Refresh stats
+              {t("dashboard.refreshStats")}
             </Button>
           </Group>
         </Group>
@@ -184,33 +222,42 @@ export default function DashboardPage() {
 
       {financialStatsError ? (
         <Alert color="red" variant="light">
-          {financialStatsError.message || "Failed to load financial statistics."}
+          {financialStatsError.message || t("dashboard.loadError")}
         </Alert>
       ) : isFinancialStatsLoading ? (
         <Center py="xl">
           <Stack align="center" gap="sm">
             <Loader />
-            <Text c="dimmed">Loading financial statistics...</Text>
+            <Text c="dimmed">{t("dashboard.loading")}</Text>
           </Stack>
         </Center>
       ) : totals ? (
         <>
           <SimpleGrid cols={{ base: 1, sm: 2, xl: 5 }}>
             <StatCard
-              label="Total Revenue"
+              label={t("dashboard.totalRevenue")}
               value={`${formatMoney(totals.total_revenue)} UZS`}
             />
-            <StatCard label="Total Orders" value={totals.total_orders} />
-            <StatCard label="Cash" value={`${formatMoney(totals.total_cash)} UZS`} />
-            <StatCard label="Click" value={`${formatMoney(totals.total_click)} UZS`} />
-            <StatCard label="Payme" value={`${formatMoney(totals.total_payme)} UZS`} />
+            <StatCard label={t("dashboard.totalOrders")} value={totals.total_orders} />
+            <StatCard
+              label={t("dashboard.cash")}
+              value={`${formatMoney(totals.total_cash)} UZS`}
+            />
+            <StatCard
+              label={t("dashboard.click")}
+              value={`${formatMoney(totals.total_click)} UZS`}
+            />
+            <StatCard
+              label={t("dashboard.payme")}
+              value={`${formatMoney(totals.total_payme)} UZS`}
+            />
           </SimpleGrid>
 
           <SimpleGrid cols={{ base: 1, xl: 2 }}>
             <Card withBorder radius="xl" p="lg">
-              <Text fw={700}>Payment Distribution</Text>
+              <Text fw={700}>{t("dashboard.paymentDistribution")}</Text>
               <Text c="dimmed" size="sm" mt={4}>
-                Share of revenue by payment method
+                {t("dashboard.paymentDistributionHint")}
               </Text>
 
               <Group mt="xl" align="center" wrap="nowrap">
@@ -223,7 +270,10 @@ export default function DashboardPage() {
                       ? paymentSections
                           .filter((section) => section.value > 0)
                           .map((section) => ({
-                            value: getPercent(section.value, totals.total_revenue),
+                            value: getPercent(
+                              section.value,
+                              totals.total_revenue,
+                            ),
                             color: section.color,
                           }))
                       : [{ value: 100, color: "gray" }]
@@ -234,7 +284,7 @@ export default function DashboardPage() {
                         {formatMoney(totals.total_revenue)}
                       </Text>
                       <Text size="xs" c="dimmed">
-                        UZS total
+                        {t("dashboard.uzsTotal")}
                       </Text>
                     </Stack>
                   }
@@ -242,7 +292,11 @@ export default function DashboardPage() {
 
                 <Stack gap="md" style={{ flex: 1 }}>
                   {paymentSections.map((section) => (
-                    <Group key={section.label} justify="space-between" wrap="nowrap">
+                    <Group
+                      key={section.label}
+                      justify="space-between"
+                      wrap="nowrap"
+                    >
                       <Group gap="sm" wrap="nowrap">
                         <div
                           style={{
@@ -268,9 +322,9 @@ export default function DashboardPage() {
             </Card>
 
             <Card withBorder radius="xl" p="lg">
-              <Text fw={700}>Partner Revenue</Text>
+              <Text fw={700}>{t("dashboard.partnerRevenue")}</Text>
               <Text c="dimmed" size="sm" mt={4}>
-                Revenue distribution across partner offices
+                {t("dashboard.partnerRevenueHint")}
               </Text>
 
               <Stack gap="lg" mt="xl">
@@ -288,9 +342,9 @@ export default function DashboardPage() {
           </SimpleGrid>
 
           <Card withBorder radius="xl" p="lg">
-            <Text fw={700}>Partner Orders</Text>
+            <Text fw={700}>{t("dashboard.partnerOrders")}</Text>
             <Text c="dimmed" size="sm" mt={4}>
-              Order volume by partner office
+              {t("dashboard.partnerOrdersHint")}
             </Text>
 
             <Stack gap="lg" mt="xl">
@@ -298,7 +352,7 @@ export default function DashboardPage() {
                 <MetricBar
                   key={`${partner.partner_name}-orders`}
                   label={partner.partner_name}
-                  value={`${partner.order_count} orders`}
+                  value={t("dashboard.ordersCount", { count: partner.order_count })}
                   percent={getPercent(partner.order_count, maxOrders)}
                   color="linear-gradient(90deg, #228be6 0%, #74c0fc 100%)"
                 />
@@ -309,26 +363,30 @@ export default function DashboardPage() {
           <Card withBorder radius="xl" p="lg">
             <Group justify="space-between" align="center" mb="md">
               <div>
-                <Text fw={700}>Partner Performance Table</Text>
+                <Text fw={700}>{t("dashboard.partnerPerformanceTable")}</Text>
                 <Text c="dimmed" size="sm" mt={4}>
-                  Revenue and order breakdown per partner office
+                  {t("dashboard.partnerPerformanceTableHint")}
                 </Text>
               </div>
               <Badge variant="light" color="orange" size="lg">
-                {partners.length} partners
+                {t("dashboard.partnersCount", { count: partners.length })}
               </Badge>
             </Group>
 
             <ScrollArea>
-              <Table highlightOnHover verticalSpacing="lg" horizontalSpacing="xl">
+              <Table
+                highlightOnHover
+                verticalSpacing="lg"
+                horizontalSpacing="xl"
+              >
                 <Table.Thead>
                   <Table.Tr>
-                    <Table.Th>Partner Office</Table.Th>
-                    <Table.Th>Total Orders</Table.Th>
-                    <Table.Th>Cash (UZS)</Table.Th>
-                    <Table.Th>Click (UZS)</Table.Th>
-                    <Table.Th>Payme (UZS)</Table.Th>
-                    <Table.Th>Total (UZS)</Table.Th>
+                    <Table.Th>{t("dashboard.partnerOffice")}</Table.Th>
+                    <Table.Th>{t("dashboard.totalOrders")}</Table.Th>
+                    <Table.Th>{t("dashboard.cashWithCurrency")}</Table.Th>
+                    <Table.Th>{t("dashboard.clickWithCurrency")}</Table.Th>
+                    <Table.Th>{t("dashboard.paymeWithCurrency")}</Table.Th>
+                    <Table.Th>{t("dashboard.totalWithCurrency")}</Table.Th>
                   </Table.Tr>
                 </Table.Thead>
                 <Table.Tbody>
@@ -342,13 +400,15 @@ export default function DashboardPage() {
                       <Table.Td>{formatMoney(partner.click_amount)}</Table.Td>
                       <Table.Td>{formatMoney(partner.payme_amount)}</Table.Td>
                       <Table.Td>
-                        <Text fw={700}>{formatMoney(partner.total_amount)}</Text>
+                        <Text fw={700}>
+                          {formatMoney(partner.total_amount)}
+                        </Text>
                       </Table.Td>
                     </Table.Tr>
                   ))}
                   <Table.Tr>
                     <Table.Td>
-                      <Text fw={800}>TOTAL</Text>
+                      <Text fw={800}>{t("dashboard.total")}</Text>
                     </Table.Td>
                     <Table.Td>
                       <Text fw={800}>{totals.total_orders}</Text>
@@ -373,7 +433,7 @@ export default function DashboardPage() {
         </>
       ) : (
         <Alert color="blue" variant="light">
-          No financial statistics available for this period.
+          {t("dashboard.noFinancialStatistics")}
         </Alert>
       )}
     </Stack>

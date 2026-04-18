@@ -4,6 +4,13 @@ export interface KitchenOrderItem {
   product_id: string;
   quantity: number;
   price: number;
+  product?: {
+    id: string;
+    name_ru?: string;
+    name_uz?: string;
+    image_url?: string;
+    price?: number;
+  };
   created_at: string;
   updated_at: string;
   deleted_at: string | null;
@@ -13,6 +20,12 @@ export interface KitchenOrder {
   id: string;
   company_id: string;
   partner_id: string;
+  partner?: {
+    id: string;
+    name_ru?: string;
+    name_uz?: string;
+    address_description?: string;
+  };
   user_id: number;
   creator_name?: string;
   phone_number?: string;
@@ -40,4 +53,12 @@ export interface KitchenPartnerGroup {
 export interface KitchenOrdersResponse {
   error: boolean;
   data: KitchenPartnerGroup[];
+}
+
+export interface OrderHistoryResponse {
+  error: boolean;
+  data: {
+    total: number;
+    orders: KitchenOrder[];
+  };
 }

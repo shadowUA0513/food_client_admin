@@ -20,6 +20,7 @@ import {
   IconBriefcase,
   IconChefHat,
   IconClockHour4,
+  IconHistory,
   IconLayoutDashboard,
   IconLogout,
   IconMoon,
@@ -47,6 +48,11 @@ export function AdminLayout() {
     { label: t("companyDetails.product"), icon: IconLayoutDashboard, to: "/product" },
     { label: t("workingHours.navLabel"), icon: IconClockHour4, to: "/working-hours" },
     { label: "Kitchen", icon: IconChefHat, to: "/kitchen" },
+    {
+      label: t("kitchenPage.orderHistoryNav"),
+      icon: IconHistory,
+      to: "/order-history",
+    },
     { label: "Clients", icon: IconUsers, to: "/clients" },
   ];
 

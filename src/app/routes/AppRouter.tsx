@@ -9,6 +9,7 @@ import AddProduct from "../../pages/products/AddProduct";
 import CategoryPage from "../../pages/categories/CategoryPage";
 import KitchenPartnerOrdersPage from "../../pages/kitchen/KitchenPartnerOrdersPage";
 import KitchenPage from "../../pages/kitchen/KitchenPage";
+import OrderHistoryPage from "../../pages/kitchen/OrderHistoryPage";
 import ProductPage from "../../pages/products/ProductPage";
 import EditCategory from "../../pages/categories/EditCategory";
 import EditProduct from "../../pages/products/EditProduct";
@@ -55,6 +56,7 @@ export function AppRouter() {
             </Route>
             <Route path="/clients" element={<ClientsPage />} />
             <Route path="/working-hours" element={<WorkingHoursPage />} />
+            <Route path="/order-history" element={<OrderHistoryPage />} />
             <Route path="/kitchen">
               <Route index element={<KitchenPage />} />
               <Route path=":partnerId" element={<KitchenPartnerOrdersPage />} />

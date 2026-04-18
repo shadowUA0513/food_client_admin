@@ -53,6 +53,43 @@ function getOrderPhoneNumber(order: KitchenOrder) {
   return order.phone_number || order.user_phone_number || order.user_phone || "";
 }
 
+function getTranslatedOrderStatus(t: (key: string) => string, status: string) {
+  switch (status.toLowerCase()) {
+    case "new":
+      return t("kitchenPage.statusNew");
+    case "closed":
+      return t("kitchenPage.statusClosed");
+    case "cancelled":
+      return t("kitchenPage.statusCancelled");
+    default:
+      return status;
+  }
+}
+
+function getTranslatedPaymentStatus(t: (key: string) => string, status: string) {
+  switch (status.toLowerCase()) {
+    case "paid":
+      return t("kitchenPage.paymentPaid");
+    case "unpaid":
+      return t("kitchenPage.paymentUnpaid");
+    default:
+      return status;
+  }
+}
+
+function getTranslatedPaymentType(t: (key: string) => string, paymentType?: string) {
+  switch ((paymentType || "").toLowerCase()) {
+    case "cash":
+      return t("kitchenPage.paymentCash");
+    case "click":
+      return t("kitchenPage.paymentClick");
+    case "payme":
+      return t("kitchenPage.paymentPayme");
+    default:
+      return paymentType || "";
+  }
+}
+
 function OrderCard({
   order,
   productMap,
@@ -80,6 +117,7 @@ function OrderCard({
   onCloseOrder: (order: KitchenOrder) => void;
   isClosing: boolean;
 }) {
+  const { t } = useTranslation();
   const hasCreatorName = Boolean(order.creator_name?.trim());
   const hasPaymentType = Boolean(order.payment_type?.trim());
   const hasAddress = Boolean(order.delivery_address?.trim());
@@ -183,7 +221,7 @@ function OrderCard({
                 <Text size="xs" fw={600} c="dimmed">
                   {paymentTypeLabel}
                 </Text>
-                <Text size="sm">{order.payment_type}</Text>
+                <Text size="sm">{getTranslatedPaymentType(t, order.payment_type)}</Text>
               </div>
             ) : null}
             {hasPhoneNumber ? (
@@ -234,7 +272,7 @@ function OrderCard({
               },
             }}
           >
-            {order.status}
+            {getTranslatedOrderStatus(t, order.status)}
           </Badge>
           <Badge
             variant="light"
@@ -256,7 +294,7 @@ function OrderCard({
               },
             }}
           >
-            {order.payment_status}
+            {getTranslatedPaymentStatus(t, order.payment_status)}
           </Badge>
         </Group>
 

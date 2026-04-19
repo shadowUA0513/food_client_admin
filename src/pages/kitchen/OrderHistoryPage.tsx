@@ -4,20 +4,29 @@ import {
   Button,
   Card,
   Center,
+  Collapse,
   Group,
   Loader,
   Pagination,
+  Select,
   SimpleGrid,
   Stack,
   Text,
   Title,
 } from "@mantine/core";
+import { DatePickerInput } from "@mantine/dates";
 import { useQueryClient } from "@tanstack/react-query";
-import { IconRefresh } from "@tabler/icons-react";
-import { useEffect } from "react";
+import {
+  IconChevronDown,
+  IconChevronUp,
+  IconRefresh,
+} from "@tabler/icons-react";
+import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useSearchParams } from "react-router-dom";
 import { useOrderHistory } from "../../service/orderHistory";
+import { usePartners } from "../../service/partners";
+import { useAuthStore } from "../../store/auth";
 import type { KitchenOrder, KitchenOrderItem } from "../../types/kitchen";
 
 function formatMoney(value?: number) {
@@ -51,10 +60,7 @@ function getOrderItems(order: KitchenOrder) {
 
 function getItemName(item: KitchenOrderItem) {
   return (
-    item.product?.name_uz ||
-    item.product?.name_ru ||
-    item.product_id ||
-    item.id
+    item.product?.name_uz || item.product?.name_ru || item.product_id || item.id
   );
 }
 
@@ -79,7 +85,10 @@ function getTranslatedOrderStatus(t: (key: string) => string, status: string) {
   }
 }
 
-function getTranslatedPaymentStatus(t: (key: string) => string, status: string) {
+function getTranslatedPaymentStatus(
+  t: (key: string) => string,
+  status: string,
+) {
   switch (status.toLowerCase()) {
     case "paid":
       return t("kitchenPage.paymentPaid");
@@ -90,7 +99,10 @@ function getTranslatedPaymentStatus(t: (key: string) => string, status: string) 
   }
 }
 
-function getTranslatedPaymentType(t: (key: string) => string, paymentType?: string) {
+function getTranslatedPaymentType(
+  t: (key: string) => string,
+  paymentType?: string,
+) {
   switch ((paymentType || "").toLowerCase()) {
     case "cash":
       return t("kitchenPage.paymentCash");
@@ -232,6 +244,7 @@ export default function OrderHistoryPage() {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
   const [searchParams, setSearchParams] = useSearchParams();
+  const companyId = useAuthStore((state) => state.company?.id);
   const partnerId = searchParams.get("partner_id");
   const paymentType = searchParams.get("payment_type");
   const status = searchParams.get("status");
@@ -241,6 +254,18 @@ export default function OrderHistoryPage() {
   const limit = searchParams.get("limit");
   const currentPage = Math.max(Number(page) || 1, 1);
   const currentLimit = Math.max(Number(limit) || 12, 1);
+  const { data: partnersData } = usePartners(companyId, 500, 1);
+  const [selectedPartnerId, setSelectedPartnerId] = useState<string | null>(
+    partnerId,
+  );
+  const [selectedPaymentType, setSelectedPaymentType] = useState<string | null>(
+    paymentType,
+  );
+  const [selectedStatus, setSelectedStatus] = useState<string | null>(status);
+  const [selectedDateRange, setSelectedDateRange] = useState<
+    [string | null, string | null]
+  >([startDate, endDate]);
+  const [isFiltersOpen, setIsFiltersOpen] = useState(false);
   const { data, error, isLoading, isFetching } = useOrderHistory({
     partnerId,
     paymentType,
@@ -257,14 +282,115 @@ export default function OrderHistoryPage() {
     }
   }, [data]);
 
+  useEffect(() => {
+    setSelectedPartnerId(partnerId);
+    setSelectedPaymentType(paymentType);
+    setSelectedStatus(status);
+    setSelectedDateRange([startDate, endDate]);
+  }, [partnerId, paymentType, status, startDate, endDate]);
+
+  useEffect(() => {
+    if (partnerId || paymentType || status || startDate || endDate) {
+      setIsFiltersOpen(true);
+    }
+  }, [partnerId, paymentType, status, startDate, endDate]);
+
   const orders = data?.orders ?? [];
   const total = data?.total ?? 0;
   const totalPages = Math.max(Math.ceil(total / currentLimit), 1);
+  const activeFiltersCount = [
+    selectedPartnerId,
+    selectedPaymentType,
+    selectedStatus,
+    selectedDateRange[0],
+    selectedDateRange[1],
+  ].filter(Boolean).length;
+  const partnerOptions = (partnersData?.partners ?? []).map((partner) => ({
+    value: partner.id,
+    label: partner.name_uz || partner.name_ru || partner.id,
+  }));
+  const paymentTypeOptions = [
+    { value: "cash", label: t("kitchenPage.paymentCash") },
+    { value: "click", label: t("kitchenPage.paymentClick") },
+    { value: "payme", label: t("kitchenPage.paymentPayme") },
+  ];
+  const statusOptions = [
+    { value: "new", label: t("kitchenPage.statusNew") },
+    { value: "closed", label: t("kitchenPage.statusClosed") },
+    { value: "cancelled", label: t("kitchenPage.statusCancelled") },
+  ];
 
   const updatePage = (nextPage: number) => {
     const nextParams = new URLSearchParams(searchParams);
     nextParams.set("page", String(nextPage));
     setSearchParams(nextParams);
+  };
+
+  const updateFilters = ({
+    nextPartnerId = selectedPartnerId,
+    nextPaymentType = selectedPaymentType,
+    nextStatus = selectedStatus,
+    nextDateRange = selectedDateRange,
+  }: {
+    nextPartnerId?: string | null;
+    nextPaymentType?: string | null;
+    nextStatus?: string | null;
+    nextDateRange?: [string | null, string | null];
+  }) => {
+    const nextParams = new URLSearchParams(searchParams);
+
+    if (nextPartnerId) {
+      nextParams.set("partner_id", nextPartnerId);
+    } else {
+      nextParams.delete("partner_id");
+    }
+
+    if (nextPaymentType) {
+      nextParams.set("payment_type", nextPaymentType);
+    } else {
+      nextParams.delete("payment_type");
+    }
+
+    if (nextStatus) {
+      nextParams.set("status", nextStatus);
+    } else {
+      nextParams.delete("status");
+    }
+
+    if (nextDateRange[0]) {
+      nextParams.set("start_date", nextDateRange[0]);
+    } else {
+      nextParams.delete("start_date");
+    }
+
+    if (nextDateRange[1]) {
+      nextParams.set("end_date", nextDateRange[1]);
+    } else {
+      nextParams.delete("end_date");
+    }
+
+    nextParams.set("page", "1");
+    setSearchParams(nextParams);
+  };
+
+  const handlePartnerChange = (value: string | null) => {
+    setSelectedPartnerId(value);
+    updateFilters({ nextPartnerId: value });
+  };
+
+  const handlePaymentTypeChange = (value: string | null) => {
+    setSelectedPaymentType(value);
+    updateFilters({ nextPaymentType: value });
+  };
+
+  const handleStatusChange = (value: string | null) => {
+    setSelectedStatus(value);
+    updateFilters({ nextStatus: value });
+  };
+
+  const handleDateRangeChange = (value: [string | null, string | null]) => {
+    setSelectedDateRange(value);
+    updateFilters({ nextDateRange: value });
   };
 
   return (
@@ -292,6 +418,79 @@ export default function OrderHistoryPage() {
           </Button>
         </Group>
       </Group>
+
+      <Card withBorder radius="xl" p="md">
+        <Stack gap="md">
+          <Group justify="space-between" align="center" wrap="wrap">
+            <div>
+              <Title order={5}>{t("kitchenPage.filtersTitle")}</Title>
+              <Text size="sm" c="dimmed">
+                {t("kitchenPage.filtersSubtitle")}
+              </Text>
+            </div>
+            <Group gap="sm">
+              <Badge
+                variant="light"
+                color={activeFiltersCount ? "orange" : "gray"}
+              >
+                {activeFiltersCount}
+              </Badge>
+              <Button
+                variant={isFiltersOpen ? "filled" : "light"}
+                onClick={() => setIsFiltersOpen((current) => !current)}
+                rightSection={
+                  isFiltersOpen ? (
+                    <IconChevronUp size={16} />
+                  ) : (
+                    <IconChevronDown size={16} />
+                  )
+                }
+              >
+                {t("kitchenPage.filterLabel")}
+              </Button>
+            </Group>
+          </Group>
+
+          <Collapse expanded={isFiltersOpen}>
+            <SimpleGrid cols={{ base: 1, sm: 2, lg: 4 }} spacing="sm">
+              <Select
+                clearable
+                searchable
+                label={t("kitchenPage.partnerFilterLabel")}
+                placeholder={t("kitchenPage.allPartners")}
+                data={partnerOptions}
+                value={selectedPartnerId}
+                onChange={handlePartnerChange}
+              />
+              <Select
+                clearable
+                label={t("kitchenPage.paymentTypeFilterLabel")}
+                placeholder={t("kitchenPage.allPaymentTypes")}
+                data={paymentTypeOptions}
+                value={selectedPaymentType}
+                onChange={handlePaymentTypeChange}
+              />
+              <Select
+                clearable
+                label={t("kitchenPage.statusFilterLabel")}
+                placeholder={t("kitchenPage.allStatuses")}
+                data={statusOptions}
+                value={selectedStatus}
+                onChange={handleStatusChange}
+              />
+              <DatePickerInput
+                clearable
+                type="range"
+                allowSingleDateInRange
+                value={selectedDateRange}
+                onChange={handleDateRangeChange}
+                label={t("kitchenPage.dateRangeFilterLabel")}
+                placeholder={t("kitchenPage.dateRangePlaceholder")}
+              />
+            </SimpleGrid>
+          </Collapse>
+        </Stack>
+      </Card>
 
       <Card withBorder radius="xl" p="md">
         {error ? (
@@ -325,7 +524,18 @@ export default function OrderHistoryPage() {
           </Alert>
         ) : (
           <Stack gap="md">
-            <SimpleGrid cols={{ base: 1, sm: 2, lg: 3, xl: 4 }} spacing="sm">
+            <Group justify="space-between" align="center">
+              <Text size="sm" c="dimmed">
+                {t("kitchenPage.ordersCount", { count: total })}
+              </Text>
+              {activeFiltersCount ? (
+                <Badge color="orange" variant="light">
+                  {t("kitchenPage.filtersTitle")}
+                </Badge>
+              ) : null}
+            </Group>
+
+            <SimpleGrid cols={{ base: 1, sm: 2, xl: 3 }} spacing="sm">
               {orders.map((order, index) => (
                 <OrderHistoryCard
                   key={order.id || `order-history-${index}`}

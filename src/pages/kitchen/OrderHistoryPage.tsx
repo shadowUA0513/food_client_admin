@@ -59,9 +59,7 @@ function getOrderItems(order: KitchenOrder) {
 }
 
 function getItemName(item: KitchenOrderItem) {
-  return (
-    item.product?.name_uz || item.product?.name_ru || item.product_id || item.id
-  );
+  return item.product?.name_uz || item.product?.name_ru || "";
 }
 
 function getPartnerName(order: KitchenOrder) {
@@ -129,9 +127,6 @@ function OrderHistoryCard({ order }: { order: KitchenOrder }) {
       <Stack gap="md" h="100%">
         <Group justify="space-between" align="flex-start" wrap="nowrap">
           <div style={{ flex: 1, minWidth: 0 }}>
-            <Text fw={700} size="lg">
-              #{String(order.id ?? "").slice(0, 8) || "N/A"}
-            </Text>
             <Text size="xs" c="dimmed">
               {formatDate(order.created_at)}
             </Text>
@@ -165,7 +160,7 @@ function OrderHistoryCard({ order }: { order: KitchenOrder }) {
                 gap="sm"
               >
                 <Text size="sm" style={{ flex: 1 }} lineClamp={2}>
-                  {getItemName(item)}
+                  {getItemName(item) || t("kitchenPage.unknownProduct")}
                 </Text>
                 <Text size="sm" fw={600} c="dimmed">
                   x {item.quantity ?? 0}
@@ -307,7 +302,7 @@ export default function OrderHistoryPage() {
   ].filter(Boolean).length;
   const partnerOptions = (partnersData?.partners ?? []).map((partner) => ({
     value: partner.id,
-    label: partner.name_uz || partner.name_ru || partner.id,
+    label: partner.name_uz || partner.name_ru || t("kitchenPage.unknownPartner"),
   }));
   const paymentTypeOptions = [
     { value: "cash", label: t("kitchenPage.paymentCash") },
@@ -515,7 +510,7 @@ export default function OrderHistoryPage() {
           <Center py="xl">
             <Stack align="center" gap="sm">
               <Loader />
-              <Text c="dimmed">Loading order history...</Text>
+              <Text c="dimmed">{t("kitchenPage.loading")}</Text>
             </Stack>
           </Center>
         ) : !orders.length ? (

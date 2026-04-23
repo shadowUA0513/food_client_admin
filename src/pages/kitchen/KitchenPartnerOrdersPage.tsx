@@ -44,7 +44,7 @@ function getProductMap(products: Product[]) {
   return new Map(
     products.map((product) => [
       product.id,
-      product.name_uz || product.name_ru || product.id,
+      product.name_uz || product.name_ru || "",
     ]),
   );
 }
@@ -138,9 +138,6 @@ function OrderCard({
       <Stack h={"100%"} gap="md">
         <Group justify="space-between" align="flex-start" wrap="nowrap">
           <div style={{ flex: 1, minWidth: 0 }}>
-            <Text fw={700} size="lg">
-              #{order.id.slice(0, 8)}
-            </Text>
             <Text size="xs" c="dimmed">
               {formatDate(order.created_at)}
             </Text>
@@ -196,7 +193,8 @@ function OrderCard({
                 gap="sm"
               >
                 <Text size="sm" style={{ flex: 1 }} lineClamp={2}>
-                  {productMap.get(item.product_id) ?? item.product_id}
+                  {productMap.get(item.product_id) ||
+                    t("kitchenPage.unknownProduct")}
                 </Text>
                 <Text size="sm" fw={600} c="dimmed">
                   x {item.quantity}

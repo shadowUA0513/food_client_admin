@@ -1,4 +1,4 @@
-﻿import {
+import {
   Alert,
   Badge,
   Button,
@@ -12,9 +12,11 @@
   Title,
 } from "@mantine/core";
 import { useQueryClient } from "@tanstack/react-query";
-import { IconRefresh } from "@tabler/icons-react";
+import { IconListDetails, IconRefresh } from "@tabler/icons-react";
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
+import { KitchenOrdersModal } from "../../components/kitchen/KitchenOrdersModal";
 import { useKitchenOrders } from "../../service/kitchen";
 import { useAuthStore } from "../../store/auth";
 
@@ -23,6 +25,11 @@ export default function KitchenPage() {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   const company = useAuthStore((state) => state.company);
+  const [selectedPartnerId, setSelectedPartnerId] = useState<string | null>(
+    null,
+  );
+  const [isKitchenOrdersModalOpen, setIsKitchenOrdersModalOpen] =
+    useState(false);
   const { data, error, isLoading, isFetching } = useKitchenOrders(company?.id);
 
   const partners = data?.partners ?? [];
@@ -32,9 +39,7 @@ export default function KitchenPage() {
       <Group justify="space-between" align="flex-start">
         <div>
           <Title order={3}>{t("kitchenPage.title")}</Title>
-          <Text c="dimmed">
-            {t("kitchenPage.subtitle")}
-          </Text>
+          <Text c="dimmed">{t("kitchenPage.subtitle")}</Text>
         </div>
         <Group gap="sm">
           <Badge color="orange" variant="light">
@@ -115,7 +120,13 @@ export default function KitchenPage() {
                       color="orange"
                       variant="light"
                       size="lg"
-                      styles={{ root: { whiteSpace: "nowrap", flexShrink: 0, maxWidth: "100%" } }}
+                      styles={{
+                        root: {
+                          whiteSpace: "nowrap",
+                          flexShrink: 0,
+                          maxWidth: "100%",
+                        },
+                      }}
                     >
                       {t("kitchenPage.ordersCount", {
                         count: partner.order_count,
@@ -123,21 +134,37 @@ export default function KitchenPage() {
                     </Badge>
                   </Group>
 
-                  <div>
-                    <Text size="sm" c="dimmed">
-                      {t("kitchenPage.openPartnerHint")}
-                    </Text>
-                  </div>
+                  <Text size="sm" c="dimmed">
+                    {t("kitchenPage.openPartnerHint")}
+                  </Text>
+
+                  <Button
+                    variant="light"
+                    color="orange"
+                    leftSection={<IconListDetails size={16} />}
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      setSelectedPartnerId(partner.partner_id);
+                      setIsKitchenOrdersModalOpen(true);
+                    }}
+                  >
+                    Kitchen orders
+                  </Button>
                 </Stack>
               </Card>
             ))}
           </SimpleGrid>
         )}
       </Card>
+
+      <KitchenOrdersModal
+        opened={isKitchenOrdersModalOpen}
+        onClose={() => {
+          setIsKitchenOrdersModalOpen(false);
+        }}
+        companyId={company?.id}
+        partnerId={selectedPartnerId}
+      />
     </Stack>
   );
 }
-
-
-
-

@@ -8,16 +8,11 @@ import {
   Loader,
   Modal,
   ScrollArea,
-  SimpleGrid,
   Stack,
   Text,
   ThemeIcon,
 } from "@mantine/core";
-import {
-  IconBuildingStore,
-  IconChefHat,
-  IconPackage,
-} from "@tabler/icons-react";
+import { IconBuildingStore } from "@tabler/icons-react";
 import { useTranslation } from "react-i18next";
 import { useKitchenOrders } from "../../hooks/useKitchenOrders";
 
@@ -42,15 +37,15 @@ export function KitchenOrdersModal({
   );
 
   const partners = data?.data ?? [];
-  const totalProductsToPrepare = partners.reduce(
-    (sum, partner) =>
-      sum +
-      partner.products.reduce(
-        (partnerSum, product) => partnerSum + product.count_to_prepare,
-        0,
-      ),
-    0,
-  );
+  // const totalProductsToPrepare = partners.reduce(
+  //   (sum, partner) =>
+  //     sum +
+  //     partner.products.reduce(
+  //       (partnerSum, product) => partnerSum + product.count_to_prepare,
+  //       0,
+  //     ),
+  //   0,
+  // );
 
   return (
     <Modal

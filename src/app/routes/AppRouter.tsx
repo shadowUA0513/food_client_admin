@@ -1,4 +1,5 @@
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
+import type { ReactElement } from "react";
 import AddCategory from "../../pages/categories/AddCategory";
 import ClientsPage from "../../pages/clients/ClientsPage";
 
@@ -22,9 +23,14 @@ import { AdminLayout } from "../layouts/AdminLayout";
 import { useAuth } from "../providers/AuthProvider";
 import { ProtectedRoute } from "./ProtectedRoute";
 import DashboardPage from "../../pages/dashboard/DashboardPage";
+import { isKitchenOnlyRole } from "../../utils/auth";
 
 export function AppRouter() {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();
+  const isKitchenOnlyUser = isKitchenOnlyRole(user?.role);
+  const defaultRoute = isKitchenOnlyUser ? "/kitchen" : "/";
+  const nonKitchenElement = (element: ReactElement) =>
+    isKitchenOnlyUser ? <Navigate to="/kitchen" replace /> : element;
 
   return (
     <BrowserRouter>
@@ -32,31 +38,51 @@ export function AppRouter() {
         <Route
           path="/login"
           element={
-            isAuthenticated ? <Navigate to="/" replace /> : <LoginPage />
+            isAuthenticated ? <Navigate to={defaultRoute} replace /> : <LoginPage />
           }
         />
         <Route element={<ProtectedRoute isAllowed={isAuthenticated} />}>
           <Route element={<AdminLayout />}>
-            <Route path="/" element={<DashboardPage />} />
-            <Route path="/partners" element={<PartnersPage />}>
-              <Route path="add" element={<AddPartner />} />
-              <Route path="edit/:partnerId" element={<EditPartner />} />
+            <Route
+              path="/"
+              element={
+                isKitchenOnlyUser ? <Navigate to="/kitchen" replace /> : <DashboardPage />
+              }
+            />
+            <Route path="/partners" element={nonKitchenElement(<PartnersPage />)}>
+              <Route path="add" element={nonKitchenElement(<AddPartner />)} />
+              <Route
+                path="edit/:partnerId"
+                element={nonKitchenElement(<EditPartner />)}
+              />
             </Route>
-            <Route path="/staff" element={<StaffPage />}>
-              <Route path="add" element={<AddStaff />} />
-              <Route path="edit/:staffId" element={<EditStaff />} />
+            <Route path="/staff" element={nonKitchenElement(<StaffPage />)}>
+              <Route path="add" element={nonKitchenElement(<AddStaff />)} />
+              <Route path="edit/:staffId" element={nonKitchenElement(<EditStaff />)} />
             </Route>
-            <Route path="/category" element={<CategoryPage />}>
-              <Route path="add" element={<AddCategory />} />
-              <Route path="edit/:categoryId" element={<EditCategory />} />
+            <Route path="/category" element={nonKitchenElement(<CategoryPage />)}>
+              <Route path="add" element={nonKitchenElement(<AddCategory />)} />
+              <Route
+                path="edit/:categoryId"
+                element={nonKitchenElement(<EditCategory />)}
+              />
             </Route>
-            <Route path="/product" element={<ProductPage />}>
-              <Route path="add" element={<AddProduct />} />
-              <Route path="edit/:productId" element={<EditProduct />} />
+            <Route path="/product" element={nonKitchenElement(<ProductPage />)}>
+              <Route path="add" element={nonKitchenElement(<AddProduct />)} />
+              <Route
+                path="edit/:productId"
+                element={nonKitchenElement(<EditProduct />)}
+              />
             </Route>
-            <Route path="/clients" element={<ClientsPage />} />
-            <Route path="/working-hours" element={<WorkingHoursPage />} />
-            <Route path="/order-history" element={<OrderHistoryPage />} />
+            <Route path="/clients" element={nonKitchenElement(<ClientsPage />)} />
+            <Route
+              path="/working-hours"
+              element={nonKitchenElement(<WorkingHoursPage />)}
+            />
+            <Route
+              path="/order-history"
+              element={nonKitchenElement(<OrderHistoryPage />)}
+            />
             <Route path="/kitchen">
               <Route index element={<KitchenPage />} />
               <Route path=":partnerId" element={<KitchenPartnerOrdersPage />} />
@@ -65,7 +91,7 @@ export function AppRouter() {
         </Route>
         <Route
           path="*"
-          element={<Navigate to={isAuthenticated ? "/" : "/login"} replace />}
+          element={<Navigate to={isAuthenticated ? defaultRoute : "/login"} replace />}
         />
       </Routes>
     </BrowserRouter>

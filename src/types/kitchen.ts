@@ -43,6 +43,22 @@ export interface KitchenOrder {
   deleted_at: string | null;
 }
 
+export interface KitchenOrderUpdateItemPayload {
+  product_id: string;
+  quantity: number;
+  price: number;
+}
+
+export interface KitchenOrderUpdatePayload {
+  company_id: string;
+  partner_id: string;
+  user_id: number;
+  delivery_address: string;
+  comment: string;
+  payment_type: string;
+  items: KitchenOrderUpdateItemPayload[];
+}
+
 export interface KitchenPartnerGroup {
   partner_id: string;
   partner_name: string;

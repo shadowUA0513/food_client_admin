@@ -16,6 +16,8 @@ import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "../../app/providers/AuthProvider";
 import { PhoneNumberInput } from "../../components/common/PhoneNumberInput";
+import { useAuthStore } from "../../store/auth";
+import { isKitchenOnlyRole } from "../../utils/auth";
 import {
   hasCompleteUzbekistanPhone,
   UZBEKISTAN_PHONE_PREFIX,
@@ -79,7 +81,10 @@ export default function LoginPage() {
 
     try {
       await login({ phone, password });
-      navigate("/", { replace: true });
+      const nextUser = useAuthStore.getState().user;
+      navigate(isKitchenOnlyRole(nextUser?.role) ? "/kitchen" : "/", {
+        replace: true,
+      });
     } catch (error) {
       setErrors((current) => ({
         ...current,

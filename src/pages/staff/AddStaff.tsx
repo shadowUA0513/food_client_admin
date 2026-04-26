@@ -198,7 +198,7 @@ export default function AddStaff() {
             label={t("staffPage.roleLabel")}
             value={form.role}
             onChange={(value) => {
-              if (value === "admin") {
+              if (value === "admin" || value === "operator") {
                 setForm((current) => ({
                   ...current,
                   role: value as StaffRole,
@@ -210,7 +210,10 @@ export default function AddStaff() {
                 form: undefined,
               }));
             }}
-            data={[{ value: "admin", label: t("staffPage.adminRole") }]}
+            data={[
+              { value: "admin", label: t("staffPage.adminRole") },
+              { value: "operator", label: t("staffPage.operatorRole") },
+            ]}
             error={errors.role}
             allowDeselect={false}
             required

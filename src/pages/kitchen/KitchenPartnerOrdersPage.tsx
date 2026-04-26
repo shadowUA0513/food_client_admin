@@ -18,6 +18,8 @@
 import { useQueryClient } from "@tanstack/react-query";
 import {
   IconArrowLeft,
+  IconBrandTelegram,
+  IconExternalLink,
   IconPencil,
   IconPlus,
   IconRefresh,
@@ -210,6 +212,8 @@ function OrderCard({
   const { t } = useTranslation();
   const hasCreatorName = Boolean(order.creator_name?.trim());
   const hasPaymentType = Boolean(order.payment_type?.trim());
+  const telegramScreenshotLink = order.tg_payment_screenshot_link?.trim() || "";
+  const hasTelegramScreenshotLink = Boolean(telegramScreenshotLink);
   const hasAddress = Boolean(order.delivery_address?.trim());
   const hasComment = Boolean(order.comment?.trim());
   const phoneNumber = getOrderPhoneNumber(order);
@@ -396,6 +400,23 @@ function OrderCard({
         </Group>
 
         <Stack mt="auto" gap="xs">
+          <Button
+            radius="md"
+            variant="light"
+            color="cyan"
+            component={hasTelegramScreenshotLink ? "a" : "button"}
+            href={hasTelegramScreenshotLink ? telegramScreenshotLink : undefined}
+            target={hasTelegramScreenshotLink ? "_blank" : undefined}
+            rel={hasTelegramScreenshotLink ? "noreferrer" : undefined}
+            leftSection={<IconBrandTelegram size={16} />}
+            rightSection={
+              hasTelegramScreenshotLink ? <IconExternalLink size={16} /> : null
+            }
+            disabled={!hasTelegramScreenshotLink}
+          >
+            {t("kitchenPage.telegramScreenshot")}
+          </Button>
+
           <Button
             fullWidth
             radius="md"

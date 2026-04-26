@@ -35,6 +35,7 @@ export interface KitchenOrder {
   status: string;
   payment_type?: string;
   payment_status: string;
+  tg_payment_screenshot_link?: string | null;
   delivery_address: string;
   comment: string;
   items: KitchenOrderItem[];

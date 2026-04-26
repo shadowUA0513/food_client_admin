@@ -37,15 +37,6 @@ export function KitchenOrdersModal({
   );
 
   const partners = data?.data ?? [];
-  // const totalProductsToPrepare = partners.reduce(
-  //   (sum, partner) =>
-  //     sum +
-  //     partner.products.reduce(
-  //       (partnerSum, product) => partnerSum + product.count_to_prepare,
-  //       0,
-  //     ),
-  //   0,
-  // );
 
   return (
     <Modal

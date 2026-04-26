@@ -35,12 +35,29 @@ export interface KitchenOrder {
   status: string;
   payment_type?: string;
   payment_status: string;
+  tg_payment_screenshot_link?: string | null;
   delivery_address: string;
   comment: string;
   items: KitchenOrderItem[];
   created_at: string;
   updated_at: string;
   deleted_at: string | null;
+}
+
+export interface KitchenOrderUpdateItemPayload {
+  product_id: string;
+  quantity: number;
+  price: number;
+}
+
+export interface KitchenOrderUpdatePayload {
+  company_id: string;
+  partner_id: string;
+  user_id: number;
+  delivery_address: string;
+  comment: string;
+  payment_type: string;
+  items: KitchenOrderUpdateItemPayload[];
 }
 
 export interface KitchenPartnerGroup {

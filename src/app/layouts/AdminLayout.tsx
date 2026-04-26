@@ -30,6 +30,7 @@ import {
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "../providers/AuthProvider";
+import { isKitchenOnlyRole } from "../../utils/auth";
 
 export function AdminLayout() {
   const [opened, { toggle, close }] = useDisclosure(false);
@@ -40,7 +41,10 @@ export function AdminLayout() {
   const { setColorScheme } = useMantineColorScheme();
   const computedColorScheme = useComputedColorScheme("light");
   const isDark = computedColorScheme === "dark";
-  const navigationItems = [
+  const isKitchenOnlyUser = isKitchenOnlyRole(user?.role);
+  const navigationItems = isKitchenOnlyUser
+    ? [{ label: "Kitchen", icon: IconChefHat, to: "/kitchen" }]
+    : [
     { label: t("common.dashboard"), icon: IconLayoutDashboard, to: "/" },
     { label: t("common.partners"), icon: IconUsers, to: "/partners" },
     { label: t("common.staff"), icon: IconBriefcase, to: "/staff" },

@@ -167,11 +167,11 @@ export default function StaffPage() {
         </Card>
         <Card withBorder radius="xl" p="lg">
           <Text c="dimmed" size="sm">
-            {t("staffPage.superAdminCount")}
+            {t("staffPage.operatorCount")}
           </Text>
           <Title order={3} mt={8}>
             {
-              filteredStaff.filter((member) => member.role === "super_admin")
+              filteredStaff.filter((member) => member.role === "operator")
                 .length
             }
           </Title>
@@ -243,7 +243,9 @@ export default function StaffPage() {
                   <Table.Td>
                     {member.role === "super_admin"
                       ? t("staffPage.superAdminRole")
-                      : t("staffPage.adminRole")}
+                      : member.role === "operator"
+                        ? t("staffPage.operatorRole")
+                        : t("staffPage.adminRole")}
                   </Table.Td>
                   <Table.Td>
                     {new Date(member.created_at).toLocaleDateString()}

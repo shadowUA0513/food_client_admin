@@ -1,7 +1,11 @@
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { AxiosError } from "axios";
 import { useAuthStore } from "../store/auth";
-import type { KitchenOrdersResponse, KitchenPartnerGroup } from "../types/kitchen";
+import type {
+  KitchenOrderUpdatePayload,
+  KitchenOrdersResponse,
+  KitchenPartnerGroup,
+} from "../types/kitchen";
 import { api } from "./api";
 
 function getErrorMessage(error: unknown, fallback: string) {
@@ -83,6 +87,58 @@ export function useUpdateKitchenOrderStatus() {
         throw new Error(
           getErrorMessage(error, "Failed to update kitchen order status.")
         );
+      }
+    },
+  });
+}
+
+type CancelKitchenOrderPayload = {
+  companyId?: string;
+  orderId: string;
+};
+
+export function useCancelKitchenOrder() {
+  return useMutation<void, Error, CancelKitchenOrderPayload>({
+    mutationFn: async ({ companyId, orderId }) => {
+      const resolvedCompanyId = companyId || useAuthStore.getState().company?.id;
+
+      if (!resolvedCompanyId) {
+        throw new Error("Company ID is required.");
+      }
+
+      try {
+        await api.patch(
+          `/api/v1/company/${resolvedCompanyId}/order/${orderId}/cancel`
+        );
+      } catch (error) {
+        throw new Error(getErrorMessage(error, "Failed to cancel kitchen order."));
+      }
+    },
+  });
+}
+
+type EditKitchenOrderPayload = {
+  companyId?: string;
+  orderId: string;
+  payload: KitchenOrderUpdatePayload;
+};
+
+export function useEditKitchenOrder() {
+  return useMutation<void, Error, EditKitchenOrderPayload>({
+    mutationFn: async ({ companyId, orderId, payload }) => {
+      const resolvedCompanyId = companyId || payload.company_id || useAuthStore.getState().company?.id;
+
+      if (!resolvedCompanyId) {
+        throw new Error("Company ID is required.");
+      }
+
+      try {
+        await api.put(
+          `/api/v1/company/${resolvedCompanyId}/order/${orderId}`,
+          payload
+        );
+      } catch (error) {
+        throw new Error(getErrorMessage(error, "Failed to update kitchen order."));
       }
     },
   });

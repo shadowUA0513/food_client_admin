@@ -242,7 +242,11 @@ export default function EditStaff() {
             label={t("staffPage.roleLabel")}
             value={form.role}
             onChange={(value) => {
-              if (value === "admin" || value === "super_admin") {
+              if (
+                value === "admin" ||
+                value === "super_admin" ||
+                value === "operator"
+              ) {
                 setForm((current) => ({
                   ...current,
                   role: value as StaffRole,
@@ -256,6 +260,7 @@ export default function EditStaff() {
             }}
             data={[
               { value: "admin", label: t("staffPage.adminRole") },
+              { value: "operator", label: t("staffPage.operatorRole") },
               ...(isLegacySuperAdmin
                 ? [
                     {

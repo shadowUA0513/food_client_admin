@@ -29,6 +29,7 @@ import {
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate, useParams } from "react-router-dom";
+import { useKitchenRealtime } from "../../hooks/useKitchenRealtime";
 import {
   useCancelKitchenOrder,
   useEditKitchenOrder,
@@ -470,6 +471,7 @@ export default function KitchenPartnerOrdersPage() {
   const { partnerId } = useParams();
   const company = useAuthStore((state) => state.company);
   const { data, error, isLoading, isFetching } = useKitchenOrders(company?.id);
+  useKitchenRealtime(company?.id);
   const { data: productsData } = useProducts(company?.id, 500, 1);
   const updateOrderStatusMutation = useUpdateKitchenOrderStatus();
   const cancelOrderMutation = useCancelKitchenOrder();

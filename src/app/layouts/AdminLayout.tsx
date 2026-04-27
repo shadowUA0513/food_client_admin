@@ -29,6 +29,8 @@ import {
 } from "@tabler/icons-react";
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
+import { useKitchenRealtime } from "../../hooks/useKitchenRealtime";
+import { useAuthStore } from "../../store/auth";
 import { useAuth } from "../providers/AuthProvider";
 import { isKitchenOnlyRole } from "../../utils/auth";
 
@@ -38,10 +40,12 @@ export function AdminLayout() {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const location = useLocation();
+  const company = useAuthStore((state) => state.company);
   const { setColorScheme } = useMantineColorScheme();
   const computedColorScheme = useComputedColorScheme("light");
   const isDark = computedColorScheme === "dark";
   const isKitchenOnlyUser = isKitchenOnlyRole(user?.role);
+  useKitchenRealtime(company?.id);
   const navigationItems = isKitchenOnlyUser
     ? [{ label: "Kitchen", icon: IconChefHat, to: "/kitchen" }]
     : [

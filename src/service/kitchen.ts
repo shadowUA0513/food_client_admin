@@ -27,6 +27,23 @@ function extractPartnerGroups(payload: unknown): KitchenPartnerGroup[] {
   return [];
 }
 
+export async function fetchKitchenOrders(companyId: string) {
+  try {
+    const { data } = await api.get<KitchenOrdersResponse>(
+      `/api/v1/company/${companyId}/kitchen/orders`
+    );
+
+    const partners = extractPartnerGroups(data);
+
+    return {
+      raw: data,
+      partners,
+    };
+  } catch (error) {
+    throw new Error(getErrorMessage(error, "Failed to load kitchen orders."));
+  }
+}
+
 export function useKitchenOrders(companyId?: string) {
   const authCompanyId = useAuthStore((state) => state.company?.id);
   const resolvedCompanyId = companyId || authCompanyId;
@@ -38,22 +55,7 @@ export function useKitchenOrders(companyId?: string) {
         throw new Error("Company ID is required.");
       }
 
-      try {
-        const { data } = await api.get<KitchenOrdersResponse>(
-          `/api/v1/company/${resolvedCompanyId}/kitchen/orders`
-        );
-
-        const partners = extractPartnerGroups(data);
-
-        return {
-          raw: data,
-          partners,
-        };
-      } catch (error) {
-        throw new Error(
-          getErrorMessage(error, "Failed to load kitchen orders.")
-        );
-      }
+      return fetchKitchenOrders(resolvedCompanyId);
     },
     enabled: Boolean(resolvedCompanyId),
     refetchOnWindowFocus: false,

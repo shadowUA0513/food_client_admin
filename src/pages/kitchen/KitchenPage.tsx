@@ -17,7 +17,6 @@ import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 import { KitchenOrdersModal } from "../../components/kitchen/KitchenOrdersModal";
-import { useKitchenRealtime } from "../../hooks/useKitchenRealtime";
 import { useKitchenOrders } from "../../service/kitchen";
 import { useAuthStore } from "../../store/auth";
 
@@ -32,7 +31,6 @@ export default function KitchenPage() {
   const [isKitchenOrdersModalOpen, setIsKitchenOrdersModalOpen] =
     useState(false);
   const { data, error, isLoading, isFetching } = useKitchenOrders(company?.id);
-  useKitchenRealtime(company?.id);
 
   const partners = data?.partners ?? [];
 

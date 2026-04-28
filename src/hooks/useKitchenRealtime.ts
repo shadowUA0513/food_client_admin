@@ -2,6 +2,8 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useEffect, useEffectEvent, useRef } from "react";
 import { AUTH_COOKIE_KEY } from "../service/api/constant";
 import { env } from "../service/api/env";
+import { fetchKitchenOrders } from "../service/kitchen";
+import type { KitchenOrder, KitchenPartnerGroup } from "../types/kitchen";
 import { showSuccessNotification } from "../utils/notifications";
 
 function getCookie(name: string) {
@@ -129,12 +131,35 @@ function showBrowserNotification(title: string, body: string) {
   };
 }
 
+function extractKnownOrderIds(partners: KitchenPartnerGroup[]) {
+  return new Set(
+    partners.flatMap((partner) =>
+      partner.orders
+        .map((order) => order.id)
+        .filter((orderId): orderId is string => Boolean(orderId)),
+    ),
+  );
+}
+
+function extractAllOrders(partners: KitchenPartnerGroup[]) {
+  return partners.flatMap((partner) => partner.orders);
+}
+
+function hasNewOrder(
+  previousOrderIds: Set<string>,
+  nextOrders: KitchenOrder[],
+) {
+  return nextOrders.some((order) => order.id && !previousOrderIds.has(order.id));
+}
+
 export function useKitchenRealtime(companyId?: string) {
-  
   const queryClient = useQueryClient();
   const socketRef = useRef<WebSocket | null>(null);
   const reconnectTimeoutRef = useRef<number | null>(null);
   const reconnectAttemptsRef = useRef(0);
+  const knownOrderIdsRef = useRef<Set<string> | null>(null);
+  const isSyncingRef = useRef(false);
+  const hasPendingSyncRef = useRef(false);
 
   const notifyKitchenUpdate = useEffectEvent(() => {
     const title = "Новый заказ";
@@ -149,14 +174,43 @@ export function useKitchenRealtime(companyId?: string) {
     speakKitchenAlert(message);
   });
 
-  const invalidateKitchenOrders = useEffectEvent(() => {
+  const syncKitchenOrders = useEffectEvent(async (shouldNotify: boolean) => {
     if (!companyId) {
       return;
     }
 
-    void queryClient.invalidateQueries({
-      queryKey: ["kitchen-orders", companyId],
-    });
+    if (isSyncingRef.current) {
+      hasPendingSyncRef.current = true;
+      return;
+    }
+
+    isSyncingRef.current = true;
+
+    try {
+      do {
+        hasPendingSyncRef.current = false;
+
+        const previousOrderIds = knownOrderIdsRef.current;
+        const nextData = await queryClient.fetchQuery({
+          queryKey: ["kitchen-orders", companyId],
+          queryFn: () => fetchKitchenOrders(companyId),
+        });
+        const nextPartners = nextData.partners ?? [];
+        const nextOrders = extractAllOrders(nextPartners);
+
+        if (
+          shouldNotify &&
+          previousOrderIds &&
+          hasNewOrder(previousOrderIds, nextOrders)
+        ) {
+          notifyKitchenUpdate();
+        }
+
+        knownOrderIdsRef.current = extractKnownOrderIds(nextPartners);
+      } while (hasPendingSyncRef.current);
+    } finally {
+      isSyncingRef.current = false;
+    }
   });
 
   useEffect(() => {
@@ -171,6 +225,7 @@ export function useKitchenRealtime(companyId?: string) {
 
   useEffect(() => {
     if (!companyId) {
+      knownOrderIdsRef.current = null;
       return;
     }
 
@@ -194,8 +249,7 @@ export function useKitchenRealtime(companyId?: string) {
       };
 
       nextSocket.onmessage = () => {
-        notifyKitchenUpdate();
-        invalidateKitchenOrders();
+        void syncKitchenOrders(true);
       };
 
       nextSocket.onerror = () => {
@@ -223,6 +277,8 @@ export function useKitchenRealtime(companyId?: string) {
       };
     };
 
+    knownOrderIdsRef.current = null;
+    void syncKitchenOrders(false);
     connect();
 
     return () => {

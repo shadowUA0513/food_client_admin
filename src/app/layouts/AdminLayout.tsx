@@ -24,6 +24,7 @@ import {
   IconLayoutDashboard,
   IconLogout,
   IconMoon,
+  IconShoppingCartPlus,
   IconSun,
   IconUsers,
 } from "@tabler/icons-react";
@@ -54,6 +55,11 @@ export function AdminLayout() {
     { label: t("common.staff"), icon: IconBriefcase, to: "/staff" },
     { label: t("companyDetails.category"), icon: IconLayoutDashboard, to: "/category" },
     { label: t("companyDetails.product"), icon: IconLayoutDashboard, to: "/product" },
+    {
+      label: t("createOrderPage.navLabel"),
+      icon: IconShoppingCartPlus,
+      to: "/create-order",
+    },
     { label: t("workingHours.navLabel"), icon: IconClockHour4, to: "/working-hours" },
     { label: "Kitchen", icon: IconChefHat, to: "/kitchen" },
     {

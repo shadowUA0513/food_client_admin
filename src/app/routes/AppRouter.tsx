@@ -23,6 +23,7 @@ import { AdminLayout } from "../layouts/AdminLayout";
 import { useAuth } from "../providers/AuthProvider";
 import { ProtectedRoute } from "./ProtectedRoute";
 import DashboardPage from "../../pages/dashboard/DashboardPage";
+import CreateOrderPage from "../../pages/orders/CreateOrderPage";
 import { isKitchenOnlyRole } from "../../utils/auth";
 
 export function AppRouter() {
@@ -74,6 +75,10 @@ export function AppRouter() {
                 element={nonKitchenElement(<EditProduct />)}
               />
             </Route>
+            <Route
+              path="/create-order"
+              element={nonKitchenElement(<CreateOrderPage />)}
+            />
             <Route path="/clients" element={nonKitchenElement(<ClientsPage />)} />
             <Route
               path="/working-hours"

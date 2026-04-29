@@ -235,6 +235,7 @@ function OrderHistoryCard({ order }: { order: KitchenOrder }) {
           ) : null}
         </Stack>
         <Button
+          mt="auto"
           radius="md"
           variant="light"
           color="cyan"

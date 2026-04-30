@@ -8,7 +8,7 @@ export interface CompanySettings {
   phone_numbers: string[];
   card_pans: string[];
   min_order_amount: number;
-  payment_accepting_style: string;
+  payment_accepting_style: "non-o" | "o";
   today_working_hours: {
     day_of_week: number;
     start_time: string;

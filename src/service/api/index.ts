@@ -11,7 +11,15 @@ function getCookie(name: string) {
   return match ? decodeURIComponent(match[1]) : null;
 }
 
+// Authenticated API instance (adds Bearer token automatically)
 export const api = axios.create({
+  baseURL: env.baseUrl,
+  timeout: API_TIMEOUT_MS,
+  withCredentials: true,
+});
+
+// Public API instance (no auth - for endpoints like /twa/company/{id}/settings)
+export const publicApi = axios.create({
   baseURL: env.baseUrl,
   timeout: API_TIMEOUT_MS,
   withCredentials: true,

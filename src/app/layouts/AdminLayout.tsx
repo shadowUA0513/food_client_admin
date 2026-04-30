@@ -24,6 +24,7 @@ import {
   IconLayoutDashboard,
   IconLogout,
   IconMoon,
+  IconShoppingCartPlus,
   IconSun,
   IconUsers,
 } from "@tabler/icons-react";
@@ -32,7 +33,7 @@ import { useTranslation } from "react-i18next";
 import { useKitchenRealtime } from "../../hooks/useKitchenRealtime";
 import { useAuthStore } from "../../store/auth";
 import { useAuth } from "../providers/AuthProvider";
-import { isKitchenOnlyRole } from "../../utils/auth";
+import { isOperator } from "../../utils/auth";
 
 export function AdminLayout() {
   const [opened, { toggle, close }] = useDisclosure(false);
@@ -44,25 +45,49 @@ export function AdminLayout() {
   const { setColorScheme } = useMantineColorScheme();
   const computedColorScheme = useComputedColorScheme("light");
   const isDark = computedColorScheme === "dark";
-  const isKitchenOnlyUser = isKitchenOnlyRole(user?.role);
+  const isOperatorUser = isOperator(user?.role);
   useKitchenRealtime(company?.id);
-  const navigationItems = isKitchenOnlyUser
-    ? [{ label: "Kitchen", icon: IconChefHat, to: "/kitchen" }]
+  const navigationItems = isOperatorUser
+    ? [
+        { label: "Kitchen", icon: IconChefHat, to: "/kitchen" },
+        {
+          label: t("createOrderPage.navLabel"),
+          icon: IconShoppingCartPlus,
+          to: "/create-order",
+        },
+      ]
     : [
-    { label: t("common.dashboard"), icon: IconLayoutDashboard, to: "/" },
-    { label: t("common.partners"), icon: IconUsers, to: "/partners" },
-    { label: t("common.staff"), icon: IconBriefcase, to: "/staff" },
-    { label: t("companyDetails.category"), icon: IconLayoutDashboard, to: "/category" },
-    { label: t("companyDetails.product"), icon: IconLayoutDashboard, to: "/product" },
-    { label: t("workingHours.navLabel"), icon: IconClockHour4, to: "/working-hours" },
-    { label: "Kitchen", icon: IconChefHat, to: "/kitchen" },
-    {
-      label: t("kitchenPage.orderHistoryNav"),
-      icon: IconHistory,
-      to: "/order-history",
-    },
-    { label: "Clients", icon: IconUsers, to: "/clients" },
-  ];
+        { label: t("common.dashboard"), icon: IconLayoutDashboard, to: "/" },
+        { label: t("common.partners"), icon: IconUsers, to: "/partners" },
+        { label: t("common.staff"), icon: IconBriefcase, to: "/staff" },
+        {
+          label: t("companyDetails.category"),
+          icon: IconLayoutDashboard,
+          to: "/category",
+        },
+        {
+          label: t("companyDetails.product"),
+          icon: IconLayoutDashboard,
+          to: "/product",
+        },
+        {
+          label: t("createOrderPage.navLabel"),
+          icon: IconShoppingCartPlus,
+          to: "/create-order",
+        },
+        {
+          label: t("workingHours.navLabel"),
+          icon: IconClockHour4,
+          to: "/working-hours",
+        },
+        { label: "Kitchen", icon: IconChefHat, to: "/kitchen" },
+        {
+          label: t("kitchenPage.orderHistoryNav"),
+          icon: IconHistory,
+          to: "/order-history",
+        },
+        { label: "Clients", icon: IconUsers, to: "/clients" },
+      ];
 
   const handleLogout = () => {
     logout();

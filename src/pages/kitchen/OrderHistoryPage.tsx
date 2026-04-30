@@ -17,8 +17,10 @@ import {
 import { DatePickerInput } from "@mantine/dates";
 import { useQueryClient } from "@tanstack/react-query";
 import {
+  IconBrandTelegram,
   IconChevronDown,
   IconChevronUp,
+  IconExternalLink,
   IconRefresh,
 } from "@tabler/icons-react";
 import { useEffect, useState } from "react";
@@ -121,6 +123,8 @@ function OrderHistoryCard({ order }: { order: KitchenOrder }) {
   const partnerName = getPartnerName(order);
   const partnerAddress = getPartnerAddress(order);
   const isClosed = orderStatus.toLowerCase() === "closed";
+  const telegramScreenshotLink = order.tg_payment_screenshot_link?.trim() || "";
+  const hasTelegramScreenshotLink = Boolean(telegramScreenshotLink);
 
   return (
     <Card withBorder radius="lg" p="md" style={{ borderWidth: 2 }}>
@@ -230,6 +234,23 @@ function OrderHistoryCard({ order }: { order: KitchenOrder }) {
             </div>
           ) : null}
         </Stack>
+        <Button
+          mt="auto"
+          radius="md"
+          variant="light"
+          color="cyan"
+          component={hasTelegramScreenshotLink ? "a" : "button"}
+          href={hasTelegramScreenshotLink ? telegramScreenshotLink : undefined}
+          target={hasTelegramScreenshotLink ? "_blank" : undefined}
+          rel={hasTelegramScreenshotLink ? "noreferrer" : undefined}
+          leftSection={<IconBrandTelegram size={16} />}
+          rightSection={
+            hasTelegramScreenshotLink ? <IconExternalLink size={16} /> : null
+          }
+          disabled={!hasTelegramScreenshotLink}
+        >
+          {t("kitchenPage.telegramScreenshot")}
+        </Button>
       </Stack>
     </Card>
   );
@@ -302,7 +323,8 @@ export default function OrderHistoryPage() {
   ].filter(Boolean).length;
   const partnerOptions = (partnersData?.partners ?? []).map((partner) => ({
     value: partner.id,
-    label: partner.name_uz || partner.name_ru || t("kitchenPage.unknownPartner"),
+    label:
+      partner.name_uz || partner.name_ru || t("kitchenPage.unknownPartner"),
   }));
   const paymentTypeOptions = [
     { value: "cash", label: t("kitchenPage.paymentCash") },

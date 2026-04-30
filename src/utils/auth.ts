@@ -1,3 +1,3 @@
-export function isKitchenOnlyRole(role?: string | null) {
-  return role === "operator" || role === "operor";
+export function isOperator(role?: string | null) {
+  return role === "operator";
 }

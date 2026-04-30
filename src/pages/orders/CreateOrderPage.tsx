@@ -42,6 +42,7 @@ import { useCategories } from "../../service/categories";
 import { useCreateCompanyOrder } from "../../service/orders";
 import { usePartners } from "../../service/partners";
 import { useProducts } from "../../service/products";
+import { useCompanySettings } from "../../service/settings";
 import { useAuthStore } from "../../store/auth";
 import type { CreateCompanyOrderPayload } from "../../types/order";
 import type { Partner } from "../../types/partners";
@@ -53,7 +54,7 @@ import {
 } from "../../utils/notifications";
 
 type CheckoutType = "myself" | "partners";
-type PaymentType = "cash" | "click" | "payme";
+type PaymentType = "cash" | "click" | "payme" | "card";
 
 function formatPrice(value: number, language: string) {
   const locale = language === "uz" ? "uz-UZ" : "ru-RU";
@@ -139,6 +140,9 @@ type CheckoutModalProps = {
   currentLanguage: string;
   isDark: boolean;
   initialPhone: string;
+  supportedOrderTypes?: string[];
+  paymentAcceptingStyle?: "non-o" | "o";
+  cardPans?: string[];
 };
 
 function CheckoutModal({
@@ -154,12 +158,33 @@ function CheckoutModal({
   currentLanguage,
   isDark,
   initialPhone,
+  supportedOrderTypes = [],
+  paymentAcceptingStyle = "o",
+  cardPans = [],
 }: CheckoutModalProps) {
+  // Determine which order types to show based on company settings
+  const showMyself = supportedOrderTypes.includes("delivery-anywhere");
+  const showPartners = supportedOrderTypes.includes("delivery-to-organization");
+
+  // Determine payment options based on payment_accepting_style
+  const isO = paymentAcceptingStyle === "o";
+  // Base payment types
+  const basePayments: PaymentType[] = isO
+    ? (["cash", "click", "payme"] as PaymentType[])
+    : (["cash"] as PaymentType[]);
+  // Add "card" option if cardPans are available
+  const hasCardPans = cardPans && cardPans.length > 0;
+  const availablePayments: PaymentType[] = hasCardPans
+    ? [...basePayments, "card"]
+    : basePayments;
+
   const { t } = useTranslation();
   const theme = useMantineTheme();
   const createOrderMutation = useCreateCompanyOrder();
   const [checkoutType, setCheckoutType] = useState<CheckoutType>("myself");
   const [paymentType, setPaymentType] = useState<PaymentType>("cash");
+  const [selectedCardPan, setSelectedCardPan] = useState<string>("");
+  const [showCardPansModal, setShowCardPansModal] = useState(false);
   const [comment, setComment] = useState("");
   const [phoneNumber, setPhoneNumber] = useState(initialPhone);
   const [selectedPartnerId, setSelectedPartnerId] = useState("");
@@ -200,9 +225,38 @@ function CheckoutModal({
         return t("createOrderPage.paymentClick");
       case "payme":
         return t("createOrderPage.paymentPayme");
+      case "card":
+        // Show selected card pan or hint to click for more options
+        if (selectedCardPan) {
+          return selectedCardPan;
+        }
+        if (cardPans && cardPans.length > 1) {
+          return `${cardPans[0]} +${cardPans.length - 1}`;
+        }
+        if (cardPans && cardPans.length > 0) {
+          return cardPans[0];
+        }
+        return "Card";
       default:
         return t("createOrderPage.paymentCash");
     }
+  };
+
+  const handleCardClick = () => {
+    if (cardPans && cardPans.length > 1) {
+      // Show modal to select card if multiple cards available
+      setShowCardPansModal(true);
+    } else if (cardPans && cardPans.length === 1) {
+      // Single card - auto-select it
+      setSelectedCardPan(cardPans[0]);
+      setPaymentType("card");
+    }
+  };
+
+  const handleSelectCardPan = (pan: string) => {
+    setSelectedCardPan(pan);
+    setPaymentType("card");
+    setShowCardPansModal(false);
   };
 
   const handleCreateOrder = async () => {
@@ -344,103 +398,138 @@ function CheckoutModal({
                       h={42}
                       style={{
                         borderRadius: 14,
-                        background: "linear-gradient(135deg, var(--mantine-color-orange-5), var(--mantine-color-yellow-4))",
+                        background:
+                          "linear-gradient(135deg, var(--mantine-color-orange-5), var(--mantine-color-yellow-4))",
                         color: "white",
                       }}
                     >
                       <IconTruckDelivery size={20} />
                     </Center>
                     <div>
-                      <Text fw={800}>{t("createOrderPage.orderTypeTitle")}</Text>
+                      <Text fw={800}>
+                        {t("createOrderPage.orderTypeTitle")}
+                      </Text>
                     </div>
                   </Group>
 
                   <SimpleGrid cols={{ base: 1, sm: 2 }} spacing="md">
-                    <Paper
-                      component="button"
-                      type="button"
-                      radius="xl"
-                      p="sm"
-                      onClick={() => setCheckoutType("myself")}
-                      style={{
-                        textAlign: "left",
-                        cursor: "pointer",
-                        background:
-                          checkoutType === "myself"
-                            ? selectedSurfaceBackground
-                            : mutedBackground,
-                        border:
-                          checkoutType === "myself" ? activeBorder : sectionBorder,
-                        minHeight: 64,
-                        display: "flex",
-                        alignItems: "center",
-                      }}
-                    >
-                      <Group justify="space-between" align="center" wrap="nowrap" w="100%">
-                        <Group gap="sm" wrap="nowrap">
-                          <Center
-                            w={34}
-                            h={34}
-                            style={{
-                              borderRadius: 999,
-                              background:
-                                checkoutType === "myself"
-                                  ? "rgba(255, 148, 66, 0.16)"
-                                  : "transparent",
-                              color: theme.colors.orange[5],
-                              flexShrink: 0,
-                            }}
-                          >
-                            <IconTruckDelivery size={18} />
-                          </Center>
-                          <Text fw={800}>{t("createOrderPage.orderTypeMyself")}</Text>
+                    {showMyself && (
+                      <Paper
+                        component="button"
+                        type="button"
+                        radius="xl"
+                        p="sm"
+                        onClick={() => setCheckoutType("myself")}
+                        style={{
+                          textAlign: "left",
+                          cursor: "pointer",
+                          background:
+                            checkoutType === "myself"
+                              ? selectedSurfaceBackground
+                              : mutedBackground,
+                          border:
+                            checkoutType === "myself"
+                              ? activeBorder
+                              : sectionBorder,
+                          minHeight: 64,
+                          display: "flex",
+                          alignItems: "center",
+                        }}
+                      >
+                        <Group
+                          justify="space-between"
+                          align="center"
+                          wrap="nowrap"
+                          w="100%"
+                        >
+                          <Group gap="sm" wrap="nowrap">
+                            <Center
+                              w={34}
+                              h={34}
+                              style={{
+                                borderRadius: 999,
+                                background:
+                                  checkoutType === "myself"
+                                    ? "rgba(255, 148, 66, 0.16)"
+                                    : "transparent",
+                                color: theme.colors.orange[5],
+                                flexShrink: 0,
+                              }}
+                            >
+                              <IconTruckDelivery size={18} />
+                            </Center>
+                            <Text fw={800}>
+                              {t("createOrderPage.orderTypeMyself")}
+                            </Text>
+                          </Group>
+                          {checkoutType === "myself" ? (
+                            <IconCheck
+                              size={18}
+                              color={theme.colors.orange[5]}
+                            />
+                          ) : null}
                         </Group>
-                        {checkoutType === "myself" ? <IconCheck size={18} color={theme.colors.orange[5]} /> : null}
-                      </Group>
-                    </Paper>
+                      </Paper>
+                    )}
 
-                    <Paper
-                      component="button"
-                      type="button"
-                      radius="xl"
-                      p="sm"
-                      onClick={() => setCheckoutType("partners")}
-                      style={{
-                        textAlign: "left",
-                        cursor: "pointer",
-                        background:
-                          checkoutType === "partners"
-                            ? selectedSurfaceBackground
-                            : mutedBackground,
-                        border:
-                          checkoutType === "partners" ? activeBorder : sectionBorder,
-                        minHeight: 64,
-                        display: "flex",
-                        alignItems: "center",
-                      }}
-                    >
-                      <Group justify="space-between" align="center" wrap="nowrap" w="100%">
-                        <Group gap="sm" wrap="nowrap">
-                          <Center
-                            w={34}
-                            h={34}
-                            style={{
-                              borderRadius: 999,
-                              background:
-                                checkoutType === "partners"
-                                  ? "rgba(255, 148, 66, 0.16)"
-                                  : "transparent",
-                              color: theme.colors.orange[5],
-                              flexShrink: 0,
-                            }}
-                          >
-                            <IconBuildingStore size={18} />
-                          </Center>
-                          <Text fw={800}>{t("createOrderPage.orderTypePartners")}</Text>
+                    {showPartners && (
+                      <Paper
+                        component="button"
+                        type="button"
+                        radius="xl"
+                        p="sm"
+                        onClick={() => setCheckoutType("partners")}
+                        style={{
+                          textAlign: "left",
+                          cursor: "pointer",
+                          background:
+                            checkoutType === "partners"
+                              ? selectedSurfaceBackground
+                              : mutedBackground,
+                          border:
+                            checkoutType === "partners"
+                              ? activeBorder
+                              : sectionBorder,
+                          minHeight: 64,
+                          display: "flex",
+                          alignItems: "center",
+                        }}
+                      >
+                        <Group
+                          justify="space-between"
+                          align="center"
+                          wrap="nowrap"
+                          w="100%"
+                        >
+                          <Group gap="sm" wrap="nowrap">
+                            <Center
+                              w={34}
+                              h={34}
+                              style={{
+                                borderRadius: 999,
+                                background:
+                                  checkoutType === "partners"
+                                    ? "rgba(255, 148, 66, 0.16)"
+                                    : "transparent",
+                                color: theme.colors.orange[5],
+                                flexShrink: 0,
+                              }}
+                            >
+                              <IconBuildingStore size={18} />
+                            </Center>
+                            <Text fw={800}>
+                              {t("createOrderPage.orderTypePartners")}
+                            </Text>
+                          </Group>
+                          {checkoutType === "partners" ? (
+                            <IconCheck
+                              size={18}
+                              color={theme.colors.orange[5]}
+                            />
+                          ) : null}
                         </Group>
-                        {checkoutType === "partners" ? <IconCheck size={18} color={theme.colors.orange[5]} /> : null}
-                      </Group>
-                    </Paper>
+                      </Paper>
+                    )}
                   </SimpleGrid>
 
                   {checkoutType === "myself" ? (
@@ -458,7 +547,8 @@ function CheckoutModal({
                     <Stack gap="md">
                       {partnersError ? (
                         <Alert color="red" variant="light">
-                          {partnersError.message || t("createOrderPage.partnerLoadError")}
+                          {partnersError.message ||
+                            t("createOrderPage.partnerLoadError")}
                         </Alert>
                       ) : partnersLoading ? (
                         <Center py="xl">
@@ -474,13 +564,19 @@ function CheckoutModal({
 
                           <div>
                             <Group gap="sm" mb="xs">
-                              <IconBuildingStore size={18} color={theme.colors.orange[5]} />
-                              <Text fw={700}>{t("createOrderPage.partnerListTitle")}</Text>
+                              <IconBuildingStore
+                                size={18}
+                                color={theme.colors.orange[5]}
+                              />
+                              <Text fw={700}>
+                                {t("createOrderPage.partnerListTitle")}
+                              </Text>
                             </Group>
                             <ScrollArea.Autosize mah={280}>
                               <Stack gap="sm">
                                 {partners.map((partner) => {
-                                  const isSelected = partner.id === selectedPartnerId;
+                                  const isSelected =
+                                    partner.id === selectedPartnerId;
 
                                   return (
                                     <Paper
@@ -500,12 +596,20 @@ function CheckoutModal({
                                         background: isSelected
                                           ? selectedSurfaceBackground
                                           : mutedBackground,
-                                        border: isSelected ? activeBorder : sectionBorder,
+                                        border: isSelected
+                                          ? activeBorder
+                                          : sectionBorder,
                                       }}
                                     >
-                                      <Group justify="space-between" align="flex-start" wrap="nowrap">
+                                      <Group
+                                        justify="space-between"
+                                        align="flex-start"
+                                        wrap="nowrap"
+                                      >
                                         <Stack gap={4} style={{ flex: 1 }}>
-                                          <Text fw={800}>{getPartnerLabel(partner)}</Text>
+                                          <Text fw={800}>
+                                            {getPartnerLabel(partner)}
+                                          </Text>
                                           <Text size="sm" c="dimmed">
                                             {partner.address_description}
                                           </Text>
@@ -516,7 +620,8 @@ function CheckoutModal({
                                             h={28}
                                             style={{
                                               borderRadius: 999,
-                                              background: theme.colors.orange[5],
+                                              background:
+                                                theme.colors.orange[5],
                                               color: "white",
                                               flexShrink: 0,
                                             }}
@@ -553,7 +658,10 @@ function CheckoutModal({
                         background: mutedBackground,
                       }}
                     >
-                      <IconCreditCard size={20} color={theme.colors.orange[5]} />
+                      <IconCreditCard
+                        size={20}
+                        color={theme.colors.orange[5]}
+                      />
                     </Center>
                     <div>
                       <Text fw={800}>{t("createOrderPage.paymentTitle")}</Text>
@@ -563,11 +671,18 @@ function CheckoutModal({
                   <Radio.Group
                     value={paymentType}
                     onChange={(value) => {
-                      setPaymentType(value as PaymentType);
+                      if (value === "card") {
+                        handleCardClick();
+                      } else {
+                        setPaymentType(value as PaymentType);
+                      }
                     }}
                   >
-                    <SimpleGrid cols={{ base: 1, sm: 3 }} spacing="md">
-                      {(["cash", "click", "payme"] as PaymentType[]).map((value) => {
+                    <SimpleGrid
+                      cols={{ base: 1, sm: availablePayments.length }}
+                      spacing="md"
+                    >
+                      {availablePayments.map((value) => {
                         const active = paymentType === value;
 
                         return (
@@ -578,7 +693,11 @@ function CheckoutModal({
                             radius="xl"
                             p="md"
                             onClick={() => {
-                              setPaymentType(value);
+                              if (value === "card") {
+                                handleCardClick();
+                              } else {
+                                setPaymentType(value);
+                              }
                             }}
                             style={{
                               width: "100%",
@@ -592,20 +711,67 @@ function CheckoutModal({
                           >
                             <Stack gap="sm">
                               <Group justify="space-between" wrap="nowrap">
-                              <Radio
-                                value={value}
-                                label={getPaymentLabel(value)}
-                              />
-                              {active ? (
-                                <IconCheck size={18} color={theme.colors.orange[5]} />
-                              ) : null}
-                            </Group>
+                                <Radio
+                                  value={value}
+                                  label={getPaymentLabel(value)}
+                                />
+                                {active ? (
+                                  <IconCheck
+                                    size={18}
+                                    color={theme.colors.orange[5]}
+                                  />
+                                ) : null}
+                              </Group>
                             </Stack>
                           </Paper>
                         );
                       })}
                     </SimpleGrid>
                   </Radio.Group>
+
+                  {/* Card PANs Selection Modal */}
+                  <Modal
+                    opened={showCardPansModal}
+                    onClose={() => setShowCardPansModal(false)}
+                    title={t("createOrderPage.selectCard") || "Select Card"}
+                    centered
+                  >
+                    <Stack gap="sm">
+                      {cardPans?.map((pan) => (
+                        <Paper
+                          key={pan}
+                          component="button"
+                          type="button"
+                          radius="xl"
+                          p="md"
+                          onClick={() => handleSelectCardPan(pan)}
+                          style={{
+                            width: "100%",
+                            textAlign: "left",
+                            cursor: "pointer",
+                            background:
+                              selectedCardPan === pan
+                                ? selectedSurfaceBackground
+                                : mutedBackground,
+                            border:
+                              selectedCardPan === pan
+                                ? activeBorder
+                                : sectionBorder,
+                          }}
+                        >
+                          <Group justify="space-between" wrap="nowrap">
+                            <Text fw={600}>{pan}</Text>
+                            {selectedCardPan === pan ? (
+                              <IconCheck
+                                size={18}
+                                color={theme.colors.orange[5]}
+                              />
+                            ) : null}
+                          </Group>
+                        </Paper>
+                      ))}
+                    </Stack>
+                  </Modal>
                 </Stack>
               </Card>
 
@@ -653,19 +819,26 @@ function CheckoutModal({
                       h={42}
                       style={{
                         borderRadius: 14,
-                        background: "linear-gradient(135deg, var(--mantine-color-orange-5), var(--mantine-color-yellow-4))",
+                        background:
+                          "linear-gradient(135deg, var(--mantine-color-orange-5), var(--mantine-color-yellow-4))",
                         color: "white",
                       }}
                     >
                       <IconReceipt2 size={20} />
                     </Center>
                     <div>
-                      <Text fw={800}>{t("createOrderPage.selectionSummary")}</Text>
+                      <Text fw={800}>
+                        {t("createOrderPage.selectionSummary")}
+                      </Text>
                     </div>
                   </Group>
 
                   <Stack gap="sm">
-                    <Paper radius="lg" p="md" style={{ background: mutedBackground }}>
+                    <Paper
+                      radius="lg"
+                      p="md"
+                      style={{ background: mutedBackground }}
+                    >
                       <Text size="xs" tt="uppercase" fw={700} c="dimmed">
                         Delivery
                       </Text>
@@ -676,14 +849,19 @@ function CheckoutModal({
                       </Text>
                       <Text size="sm" c="dimmed" mt={4}>
                         {checkoutType === "myself"
-                          ? deliveryAddress || t("createOrderPage.addressPlaceholder")
+                          ? deliveryAddress ||
+                            t("createOrderPage.addressPlaceholder")
                           : selectedPartner
                             ? `${getPartnerLabel(selectedPartner)}${selectedPartner.address_description ? `, ${selectedPartner.address_description}` : ""}`
                             : t("createOrderPage.choosePartner")}
                       </Text>
                     </Paper>
 
-                    <Paper radius="lg" p="md" style={{ background: mutedBackground }}>
+                    <Paper
+                      radius="lg"
+                      p="md"
+                      style={{ background: mutedBackground }}
+                    >
                       <Text size="xs" tt="uppercase" fw={700} c="dimmed">
                         Contact
                       </Text>
@@ -697,7 +875,11 @@ function CheckoutModal({
                       ) : null}
                     </Paper>
 
-                    <Paper radius="lg" p="md" style={{ background: mutedBackground }}>
+                    <Paper
+                      radius="lg"
+                      p="md"
+                      style={{ background: mutedBackground }}
+                    >
                       <Text size="xs" tt="uppercase" fw={700} c="dimmed">
                         Payment
                       </Text>
@@ -722,12 +904,20 @@ function CheckoutModal({
                           wrap="nowrap"
                         >
                           <div style={{ flex: 1 }}>
-                            <Text fw={700}>{getProductName(product, currentLanguage)}</Text>
+                            <Text fw={700}>
+                              {getProductName(product, currentLanguage)}
+                            </Text>
                             <Text size="sm" c="dimmed">
-                              {quantity} x {formatPrice(getEffectivePrice(product), currentLanguage)}
+                              {quantity} x{" "}
+                              {formatPrice(
+                                getEffectivePrice(product),
+                                currentLanguage,
+                              )}
                             </Text>
                           </div>
-                          <Text fw={800}>{formatPrice(itemTotal, currentLanguage)}</Text>
+                          <Text fw={800}>
+                            {formatPrice(itemTotal, currentLanguage)}
+                          </Text>
                         </Group>
                       );
                     })}
@@ -762,9 +952,11 @@ function CheckoutModal({
                       </div>
                       <Badge variant="white" color="dark" size="lg" radius="xl">
                         {cartProducts.reduce(
-                          (sum, product) => sum + (cartQuantities[product.id] ?? 0),
+                          (sum, product) =>
+                            sum + (cartQuantities[product.id] ?? 0),
                           0,
-                        )} items
+                        )}{" "}
+                        items
                       </Badge>
                     </Group>
                   </Paper>
@@ -779,7 +971,9 @@ function CheckoutModal({
           py="md"
           style={{
             borderTop: sectionBorder,
-            background: isDark ? "rgba(16,17,20,0.94)" : "rgba(255,255,255,0.92)",
+            background: isDark
+              ? "rgba(16,17,20,0.94)"
+              : "rgba(255,255,255,0.92)",
             backdropFilter: "blur(10px)",
           }}
         >
@@ -821,12 +1015,22 @@ export default function CreateOrderPage() {
   const [cartQuantities, setCartQuantities] = useState<Record<string, number>>(
     {},
   );
-  const { data: categoriesData, isLoading: categoriesLoading, error: categoriesError } =
-    useCategories(companyId, 1000, 1, "");
-  const { data: productsData, isLoading: productsLoading, error: productsError } =
-    useProducts(companyId, 1000, 1, "");
-  const { data: partnersData, isLoading: partnersLoading, error: partnersError } =
-    usePartners(companyId, 500, 1, "");
+  const {
+    data: categoriesData,
+    isLoading: categoriesLoading,
+    error: categoriesError,
+  } = useCategories(companyId, 1000, 1, "");
+  const {
+    data: productsData,
+    isLoading: productsLoading,
+    error: productsError,
+  } = useProducts(companyId, 1000, 1, "");
+  const {
+    data: partnersData,
+    isLoading: partnersLoading,
+    error: partnersError,
+  } = usePartners(companyId, 500, 1, "");
+  const { data: settingsData } = useCompanySettings(companyId ?? "");
 
   const currentLanguage = i18n.resolvedLanguage ?? "ru";
   const categories = [...(categoriesData?.categories ?? [])].sort(
@@ -843,12 +1047,14 @@ export default function CreateOrderPage() {
     productsByCategory.set(product.category_id, currentProducts);
   }
 
-  const visibleCategories = categories.filter((category) =>
-    (productsByCategory.get(category.id) ?? []).length > 0,
+  const visibleCategories = categories.filter(
+    (category) => (productsByCategory.get(category.id) ?? []).length > 0,
   );
   const isLoading = categoriesLoading || productsLoading;
   const error = categoriesError ?? productsError;
-  const cartProducts = activeProducts.filter((product) => cartQuantities[product.id] > 0);
+  const cartProducts = activeProducts.filter(
+    (product) => cartQuantities[product.id] > 0,
+  );
   const cartItemsCount = cartProducts.reduce(
     (sum, product) => sum + (cartQuantities[product.id] ?? 0),
     0,
@@ -932,6 +1138,9 @@ export default function CreateOrderPage() {
         currentLanguage={currentLanguage}
         isDark={isDark}
         initialPhone=""
+        supportedOrderTypes={settingsData?.supported_order_types ?? []}
+        paymentAcceptingStyle={settingsData?.payment_accepting_style}
+        cardPans={settingsData?.card_pans ?? []}
       />
 
       <div>
@@ -962,7 +1171,8 @@ export default function CreateOrderPage() {
           <div style={{ minWidth: 0 }}>
             <Stack gap="xl">
               {visibleCategories.map((category) => {
-                const categoryProducts = productsByCategory.get(category.id) ?? [];
+                const categoryProducts =
+                  productsByCategory.get(category.id) ?? [];
 
                 return (
                   <Stack key={category.id} gap="md">
@@ -1021,7 +1231,10 @@ export default function CreateOrderPage() {
                               <Stack gap={4}>
                                 {hasDiscount ? (
                                   <Text size="xs" td="line-through" c="dimmed">
-                                    {formatPrice(product.price, currentLanguage)}
+                                    {formatPrice(
+                                      product.price,
+                                      currentLanguage,
+                                    )}
                                   </Text>
                                 ) : null}
                                 <Text
@@ -1093,7 +1306,9 @@ export default function CreateOrderPage() {
                         {t("createOrderPage.cartTitle")}
                       </Text>
                       <Text size="10px" c="dimmed">
-                        {t("createOrderPage.cartItems", { count: cartItemsCount })}
+                        {t("createOrderPage.cartItems", {
+                          count: cartItemsCount,
+                        })}
                       </Text>
                     </div>
                   </Group>
@@ -1154,7 +1369,12 @@ export default function CreateOrderPage() {
                                 align="flex-start"
                                 wrap="nowrap"
                               >
-                                <Text fw={600} size="xs" lineClamp={2} style={{ flex: 1 }}>
+                                <Text
+                                  fw={600}
+                                  size="xs"
+                                  lineClamp={2}
+                                  style={{ flex: 1 }}
+                                >
                                   {getProductName(product, currentLanguage)}
                                 </Text>
                                 <ActionIcon
@@ -1164,7 +1384,9 @@ export default function CreateOrderPage() {
                                   onClick={() => {
                                     changeCartQuantity(product.id, 0);
                                   }}
-                                  aria-label={t("createOrderPage.removeFromCart")}
+                                  aria-label={t(
+                                    "createOrderPage.removeFromCart",
+                                  )}
                                 >
                                   <IconTrash size={16} />
                                 </ActionIcon>
@@ -1172,8 +1394,15 @@ export default function CreateOrderPage() {
 
                               <Stack gap={2}>
                                 {hasDiscount ? (
-                                <Text size="10px" td="line-through" c="dimmed">
-                                    {formatPrice(product.price, currentLanguage)}
+                                  <Text
+                                    size="10px"
+                                    td="line-through"
+                                    c="dimmed"
+                                  >
+                                    {formatPrice(
+                                      product.price,
+                                      currentLanguage,
+                                    )}
                                   </Text>
                                 ) : null}
                                 <Text
@@ -1192,9 +1421,14 @@ export default function CreateOrderPage() {
                                     color="orange"
                                     size="sm"
                                     onClick={() => {
-                                      changeCartQuantity(product.id, quantity - 1);
+                                      changeCartQuantity(
+                                        product.id,
+                                        quantity - 1,
+                                      );
                                     }}
-                                    aria-label={t("createOrderPage.decreaseQuantity")}
+                                    aria-label={t(
+                                      "createOrderPage.decreaseQuantity",
+                                    )}
                                   >
                                     <IconMinus size={16} />
                                   </ActionIcon>
@@ -1212,9 +1446,14 @@ export default function CreateOrderPage() {
                                     color="orange"
                                     size="sm"
                                     onClick={() => {
-                                      changeCartQuantity(product.id, quantity + 1);
+                                      changeCartQuantity(
+                                        product.id,
+                                        quantity + 1,
+                                      );
                                     }}
-                                    aria-label={t("createOrderPage.increaseQuantity")}
+                                    aria-label={t(
+                                      "createOrderPage.increaseQuantity",
+                                    )}
                                   >
                                     <IconPlus size={16} />
                                   </ActionIcon>
@@ -1262,7 +1501,9 @@ export default function CreateOrderPage() {
                           size="sm"
                           styles={{ label: { fontWeight: 700 } }}
                         >
-                          {t("createOrderPage.cartItems", { count: cartItemsCount })}
+                          {t("createOrderPage.cartItems", {
+                            count: cartItemsCount,
+                          })}
                         </Badge>
                       </Group>
                     </Card>

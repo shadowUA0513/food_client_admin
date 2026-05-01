@@ -32,6 +32,7 @@ interface FormErrors {
   name_uz?: string;
   name_ru?: string;
   description?: string;
+  description_uz?: string;
   price?: string;
   discounted_price?: string;
   stock_quantity?: string;
@@ -46,6 +47,7 @@ const EMPTY_FORM: UpdateProductPayload = {
   name_uz: "",
   name_ru: "",
   description: "",
+  description_uz: "",
   price: 0,
   discounted_price: 0,
   image_url: "",
@@ -66,7 +68,8 @@ export default function EditProduct() {
   const queryClient = useQueryClient();
   const updateProductMutation = useUpdateProduct();
   const { data: categoriesData } = useCategories(companyId, 1000, 1, "");
-  const locationProduct = (location.state as { product?: Product } | null)?.product;
+  const locationProduct = (location.state as { product?: Product } | null)
+    ?.product;
   const {
     data: fetchedProduct,
     isLoading,
@@ -77,10 +80,12 @@ export default function EditProduct() {
   const [errors, setErrors] = useState<FormErrors>({});
   const [isUploadingImage, setIsUploadingImage] = useState(false);
 
-  const categoryOptions = (categoriesData?.categories ?? []).map((category) => ({
-    value: category.id,
-    label: `${category.name_uz} / ${category.name_ru}`,
-  }));
+  const categoryOptions = (categoriesData?.categories ?? []).map(
+    (category) => ({
+      value: category.id,
+      label: `${category.name_uz} / ${category.name_ru}`,
+    }),
+  );
 
   useEffect(() => {
     if (!product) {
@@ -94,6 +99,7 @@ export default function EditProduct() {
         name_uz: product.name_uz,
         name_ru: product.name_ru,
         description: product.description,
+        description_uz: product.description_uz || "",
         price: product.price,
         discounted_price: product.discounted_price ?? 0,
         image_url: product.image_url,
@@ -158,7 +164,9 @@ export default function EditProduct() {
       }));
     } catch (error) {
       const message =
-        error instanceof Error ? error.message : "Failed to upload the selected image.";
+        error instanceof Error
+          ? error.message
+          : "Failed to upload the selected image.";
 
       setErrors((current) => ({
         ...current,
@@ -188,12 +196,20 @@ export default function EditProduct() {
       nextErrors.description = t("companyDetails.productDescriptionRequired");
     }
 
+    if (!form.description_uz.trim()) {
+      nextErrors.description_uz = t(
+        "companyDetails.productDescriptionUzRequired",
+      );
+    }
+
     if (!Number.isFinite(form.price) || form.price <= 0) {
       nextErrors.price = t("companyDetails.productPriceRequired");
     }
 
     if (!Number.isFinite(form.discounted_price) || form.discounted_price < 0) {
-      nextErrors.discounted_price = t("companyDetails.productDiscountedPriceInvalid");
+      nextErrors.discounted_price = t(
+        "companyDetails.productDiscountedPriceInvalid",
+      );
     }
 
     if (!Number.isFinite(form.stock_quantity) || form.stock_quantity < 0) {
@@ -220,6 +236,7 @@ export default function EditProduct() {
           name_uz: form.name_uz.trim(),
           name_ru: form.name_ru.trim(),
           description: form.description.trim(),
+          description_uz: form.description_uz.trim(),
           price: Number(form.price),
           discounted_price: Number(form.discounted_price),
           image_url: form.image_url.trim(),
@@ -227,7 +244,9 @@ export default function EditProduct() {
           is_available: form.is_available,
         },
       });
-      await queryClient.invalidateQueries({ queryKey: ["products", companyId] });
+      await queryClient.invalidateQueries({
+        queryKey: ["products", companyId],
+      });
       await queryClient.invalidateQueries({
         queryKey: ["product", companyId, productId],
       });
@@ -350,6 +369,24 @@ export default function EditProduct() {
               required
             />
 
+            <Textarea
+              label={t("companyDetails.productDescriptionUz")}
+              placeholder={t("companyDetails.productDescriptionUzPlaceholder")}
+              value={form.description_uz}
+              onChange={(event) => {
+                const value = event.currentTarget.value;
+                setForm((current) => ({ ...current, description_uz: value }));
+                setErrors((current) => ({
+                  ...current,
+                  description_uz: undefined,
+                  form: undefined,
+                }));
+              }}
+              error={errors.description_uz}
+              minRows={3}
+              required
+            />
+
             <NumberInput
               label={t("companyDetails.price")}
               value={form.price}
@@ -397,8 +434,8 @@ export default function EditProduct() {
                 isUploadingImage
                   ? t("upload.uploadingImage")
                   : t("upload.imageUploadHint", {
-                    size: formatFileSize(MAX_IMAGE_SIZE_BYTES),
-                  })
+                      size: formatFileSize(MAX_IMAGE_SIZE_BYTES),
+                    })
               }
             />
 
@@ -458,5 +495,3 @@ export default function EditProduct() {
     </Modal>
   );
 }
-
-

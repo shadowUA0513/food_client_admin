@@ -151,6 +151,7 @@ export default function ProductPage() {
           name_ru: product.name_ru,
           name_uz: product.name_uz,
           description: product.description,
+          description_uz: product.description_uz || "",
           price: product.price,
           discounted_price: product.discounted_price ?? 0,
           image_url: product.image_url,

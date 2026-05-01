@@ -5,6 +5,7 @@ export interface Product {
   name_uz: string;
   name_ru: string;
   description: string;
+  description_uz: string;
   price: number;
   discounted_price: number;
   image_url: string;
@@ -20,6 +21,7 @@ export interface CreateProductPayload {
   name_ru: string;
   name_uz: string;
   description: string;
+  description_uz: string;
   price: number;
   discounted_price: number;
   image_url: string;

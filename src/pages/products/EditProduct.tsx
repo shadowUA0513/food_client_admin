@@ -17,6 +17,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { startTransition, useEffect, useState, type FormEvent } from "react";
 import { useTranslation } from "react-i18next";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
+import { ImagePreview } from "../../components/common/ImagePreview";
 import { useCategories } from "../../service/categories";
 import { uploadImage } from "../../service/images";
 import { useProductById, useUpdateProduct } from "../../service/products";
@@ -437,6 +438,16 @@ export default function EditProduct() {
                       size: formatFileSize(MAX_IMAGE_SIZE_BYTES),
                     })
               }
+            />
+
+            <ImagePreview
+              imageUrl={form.image_url}
+              alt={form.name_uz || form.name_ru || t("companyDetails.product")}
+              emptyLabel={t("upload.imageUploadHint", {
+                size: formatFileSize(MAX_IMAGE_SIZE_BYTES),
+              })}
+              height={260}
+              maxWidth={280}
             />
 
             <NumberInput

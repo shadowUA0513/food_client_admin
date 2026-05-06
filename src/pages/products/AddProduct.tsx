@@ -15,6 +15,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useState, type FormEvent } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
+import { ImagePreview } from "../../components/common/ImagePreview";
 import { useCategories } from "../../service/categories";
 import { uploadImage } from "../../service/images";
 import { useCreateProduct } from "../../service/products";
@@ -385,6 +386,16 @@ export default function AddProduct() {
                     size: formatFileSize(MAX_IMAGE_SIZE_BYTES),
                   })
             }
+          />
+
+          <ImagePreview
+            imageUrl={form.image_url}
+            alt={form.name_uz || form.name_ru || t("companyDetails.product")}
+            emptyLabel={t("upload.imageUploadHint", {
+              size: formatFileSize(MAX_IMAGE_SIZE_BYTES),
+            })}
+            height={260}
+            maxWidth={280}
           />
 
           <NumberInput

@@ -870,7 +870,9 @@ function CheckoutModal({
                       </Text>
                       {comment.trim() ? (
                         <Text size="sm" c="dimmed" mt={6}>
-                          {comment.trim()}
+                          {t("createOrderPage.commentSummary", {
+                            comment: comment.trim(),
+                          })}
                         </Text>
                       ) : null}
                     </Paper>

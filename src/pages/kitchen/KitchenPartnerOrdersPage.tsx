@@ -75,11 +75,25 @@ function formatDate(value: string) {
   });
 }
 
-function getProductMap(products: Product[]) {
+function getLocalizedProductName(
+  product:
+    | Product
+    | {
+        name_uz?: string;
+        name_ru?: string;
+      },
+  language: string,
+) {
+  return language === "uz"
+    ? product.name_uz || product.name_ru || ""
+    : product.name_ru || product.name_uz || "";
+}
+
+function getProductMap(products: Product[], language: string) {
   return new Map(
     products.map((product) => [
       product.id,
-      product.name_uz || product.name_ru || "",
+      getLocalizedProductName(product, language),
     ]),
   );
 }
@@ -464,7 +478,7 @@ function OrderCard({
 }
 
 export default function KitchenPartnerOrdersPage() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   const { partnerId } = useParams();
@@ -478,17 +492,19 @@ export default function KitchenPartnerOrdersPage() {
   const [orderToCancel, setOrderToCancel] = useState<KitchenOrder | null>(null);
   const [editForm, setEditForm] = useState<EditOrderForm | null>(null);
   const [editError, setEditError] = useState<string | null>(null);
+  const currentLanguage = i18n.resolvedLanguage ?? i18n.language ?? "ru";
 
   const products = productsData?.products ?? [];
   const partners = data?.partners ?? [];
   const selectedPartner = partners.find(
     (partner) => partner.partner_id === partnerId,
   );
-  const productMap = getProductMap(products);
+  const productMap = getProductMap(products, currentLanguage);
   const productOptions = products.map((product) => ({
     value: product.id,
     label:
-      product.name_uz || product.name_ru || t("kitchenPage.unknownProduct"),
+      getLocalizedProductName(product, currentLanguage) ||
+      t("kitchenPage.unknownProduct"),
   }));
   const paymentTypeOptions = [
     { value: "cash", label: t("kitchenPage.paymentCash") },

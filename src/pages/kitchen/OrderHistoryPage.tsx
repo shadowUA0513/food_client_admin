@@ -60,12 +60,24 @@ function getOrderItems(order: KitchenOrder) {
   return Array.isArray(order.items) ? order.items : [];
 }
 
-function getItemName(item: KitchenOrderItem) {
-  return item.product?.name_uz || item.product?.name_ru || "";
+function getLocalizedName(
+  value: {
+    name_uz?: string;
+    name_ru?: string;
+  },
+  language: string,
+) {
+  return language === "uz"
+    ? value.name_uz || value.name_ru || ""
+    : value.name_ru || value.name_uz || "";
 }
 
-function getPartnerName(order: KitchenOrder) {
-  return order.partner?.name_uz || order.partner?.name_ru || "";
+function getItemName(item: KitchenOrderItem, language: string) {
+  return item.product ? getLocalizedName(item.product, language) : "";
+}
+
+function getPartnerName(order: KitchenOrder, language: string) {
+  return order.partner ? getLocalizedName(order.partner, language) : "";
 }
 
 function getPartnerAddress(order: KitchenOrder) {
@@ -116,11 +128,12 @@ function getTranslatedPaymentType(
 }
 
 function OrderHistoryCard({ order }: { order: KitchenOrder }) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const currentLanguage = i18n.resolvedLanguage ?? i18n.language ?? "ru";
   const items = getOrderItems(order);
   const orderStatus = getOrderStatus(order);
   const paymentStatus = getPaymentStatus(order);
-  const partnerName = getPartnerName(order);
+  const partnerName = getPartnerName(order, currentLanguage);
   const partnerAddress = getPartnerAddress(order);
   const isClosed = orderStatus.toLowerCase() === "closed";
   const telegramScreenshotLink = order.tg_payment_screenshot_link?.trim() || "";
@@ -164,7 +177,8 @@ function OrderHistoryCard({ order }: { order: KitchenOrder }) {
                 gap="sm"
               >
                 <Text size="sm" style={{ flex: 1 }} lineClamp={2}>
-                  {getItemName(item) || t("kitchenPage.unknownProduct")}
+                  {getItemName(item, currentLanguage) ||
+                    t("kitchenPage.unknownProduct")}
                 </Text>
                 <Text size="sm" fw={600} c="dimmed">
                   x {item.quantity ?? 0}
@@ -257,7 +271,7 @@ function OrderHistoryCard({ order }: { order: KitchenOrder }) {
 }
 
 export default function OrderHistoryPage() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const queryClient = useQueryClient();
   const [searchParams, setSearchParams] = useSearchParams();
   const companyId = useAuthStore((state) => state.company?.id);
@@ -321,10 +335,12 @@ export default function OrderHistoryPage() {
     selectedDateRange[0],
     selectedDateRange[1],
   ].filter(Boolean).length;
+  const currentLanguage = i18n.resolvedLanguage ?? i18n.language ?? "ru";
   const partnerOptions = (partnersData?.partners ?? []).map((partner) => ({
     value: partner.id,
     label:
-      partner.name_uz || partner.name_ru || t("kitchenPage.unknownPartner"),
+      getLocalizedName(partner, currentLanguage) ||
+      t("kitchenPage.unknownPartner"),
   }));
   const paymentTypeOptions = [
     { value: "cash", label: t("kitchenPage.paymentCash") },

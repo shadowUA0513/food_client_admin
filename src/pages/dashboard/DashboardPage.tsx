@@ -189,6 +189,7 @@ export default function DashboardPage() {
           <Group gap="sm">
             <DatePickerInput
               type="range"
+              allowSingleDateInRange
               value={selectedDateRange}
               onChange={setSelectedDateRange}
               leftSection={<IconCalendar size={16} />}

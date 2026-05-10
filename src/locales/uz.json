@@ -110,6 +110,7 @@
     "itemsLabel": "Mahsulotlar",
     "phoneLabel": "Telefon",
     "creatorLabel": "Yaratuvchi",
+    "orderCodeLabel": "Buyurtma kodi",
     "paymentTypeLabel": "To'lov turi",
     "paymentCash": "Naqd",
     "paymentClick": "Click",

@@ -104,6 +104,16 @@ function getOrderPhoneNumber(order: KitchenOrder) {
   );
 }
 
+function getTelegramProfileLink(username?: string) {
+  const normalizedUsername = username?.trim().replace(/^@/, "") || "";
+
+  if (!/^[a-zA-Z0-9_]{5,32}$/.test(normalizedUsername)) {
+    return null;
+  }
+
+  return `https://t.me/${normalizedUsername}`;
+}
+
 function getTranslatedOrderStatus(t: (key: string) => string, status: string) {
   switch (status.toLowerCase()) {
     case "new":
@@ -186,6 +196,7 @@ function OrderCard({
   order,
   productMap,
   itemsLabel,
+  orderCodeLabel,
   phoneLabel,
   creatorLabel,
   paymentTypeLabel,
@@ -206,6 +217,7 @@ function OrderCard({
   order: KitchenOrder;
   productMap: Map<string, string>;
   itemsLabel: string;
+  orderCodeLabel: string;
   phoneLabel: string;
   creatorLabel: string;
   paymentTypeLabel: string;
@@ -224,6 +236,7 @@ function OrderCard({
   isCancelling: boolean;
 }) {
   const { t } = useTranslation();
+  const hasOrderCode = Boolean(order.order_code?.trim());
   const hasCreatorName = Boolean(order.creator_name?.trim());
   const hasPaymentType = Boolean(order.payment_type?.trim());
   const telegramScreenshotLink = order.tg_payment_screenshot_link?.trim() || "";
@@ -236,6 +249,7 @@ function OrderCard({
   const isClosed = status === "closed";
   const isCancelled = status === "cancelled";
   const isActionLocked = isClosed || isCancelled;
+  const creatorTelegramProfileLink = getTelegramProfileLink(order.creator_name);
 
   return (
     <Card
@@ -249,6 +263,11 @@ function OrderCard({
       <Stack h="100%" gap="md">
         <Group justify="space-between" align="flex-start" wrap="nowrap">
           <div style={{ flex: 1, minWidth: 0 }}>
+            {hasOrderCode ? (
+              <Text size="xs" fw={700}>
+                {orderCodeLabel}: {order.order_code}
+              </Text>
+            ) : null}
             <Text size="xs" c="dimmed">
               {formatDate(order.created_at)}
             </Text>
@@ -326,7 +345,23 @@ function OrderCard({
                 <Text size="xs" fw={600} c="dimmed">
                   {creatorLabel}
                 </Text>
-                <Text size="sm">{order.creator_name}</Text>
+                <Text
+                  size="sm"
+                  component={creatorTelegramProfileLink ? "a" : "span"}
+                  href={creatorTelegramProfileLink || undefined}
+                  target={creatorTelegramProfileLink ? "_blank" : undefined}
+                  rel={creatorTelegramProfileLink ? "noreferrer" : undefined}
+                  style={
+                    creatorTelegramProfileLink
+                      ? {
+                          color: "var(--mantine-color-blue-6)",
+                          textDecoration: "underline",
+                        }
+                      : undefined
+                  }
+                >
+                  {order.creator_name}
+                </Text>
               </div>
             ) : null}
             {hasPaymentType ? (
@@ -817,6 +852,7 @@ export default function KitchenPartnerOrdersPage() {
                   order={order}
                   productMap={productMap}
                   itemsLabel={t("kitchenPage.itemsLabel")}
+                  orderCodeLabel={t("kitchenPage.orderCodeLabel")}
                   phoneLabel={t("kitchenPage.phoneLabel")}
                   creatorLabel={t("kitchenPage.creatorLabel")}
                   paymentTypeLabel={t("kitchenPage.paymentTypeLabel")}

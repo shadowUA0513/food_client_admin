@@ -18,6 +18,7 @@ export interface KitchenOrderItem {
 
 export interface KitchenOrder {
   id: string;
+  order_code?: string;
   company_id: string;
   partner_id: string;
   partner?: {

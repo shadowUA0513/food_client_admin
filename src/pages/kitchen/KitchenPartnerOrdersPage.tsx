@@ -62,12 +62,18 @@ type EditOrderForm = {
   items: EditableOrderItem[];
 };
 
-function formatMoney(value: number) {
-  return new Intl.NumberFormat("ru-RU").format(value);
+function formatMoney(value: number, language: string) {
+  const locale =
+    language === "ru" ? "ru-RU" : language === "en" ? "en-US" : "uz-UZ";
+
+  return new Intl.NumberFormat(locale).format(value);
 }
 
-function formatDate(value: string) {
-  return new Date(value).toLocaleString("ru-RU", {
+function formatDate(value: string, language: string) {
+  const locale =
+    language === "ru" ? "ru-RU" : language === "en" ? "en-US" : "uz-UZ";
+
+  return new Date(value).toLocaleString(locale, {
     day: "2-digit",
     month: "2-digit",
     hour: "2-digit",
@@ -84,9 +90,9 @@ function getLocalizedProductName(
       },
   language: string,
 ) {
-  return language === "uz"
-    ? product.name_uz || product.name_ru || ""
-    : product.name_ru || product.name_uz || "";
+  return language === "ru"
+    ? product.name_ru || product.name_uz || ""
+    : product.name_uz || product.name_ru || "";
 }
 
 function getProductMap(products: Product[], language: string) {
@@ -235,7 +241,8 @@ function OrderCard({
   isEditing: boolean;
   isCancelling: boolean;
 }) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const currentLanguage = i18n.resolvedLanguage ?? i18n.language ?? "ru";
   const hasOrderCode = Boolean(order.order_code?.trim());
   const hasCreatorName = Boolean(order.creator_name?.trim());
   const hasPaymentType = Boolean(order.payment_type?.trim());
@@ -269,7 +276,7 @@ function OrderCard({
               </Text>
             ) : null}
             <Text size="xs" c="dimmed">
-              {formatDate(order.created_at)}
+              {formatDate(order.created_at, currentLanguage)}
             </Text>
           </div>
           <Badge
@@ -295,7 +302,7 @@ function OrderCard({
               },
             }}
           >
-            {formatMoney(order.total_amount)} so'm
+            {formatMoney(order.total_amount, currentLanguage)} so'm
           </Badge>
         </Group>
 

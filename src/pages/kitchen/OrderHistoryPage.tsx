@@ -31,16 +31,22 @@ import { usePartners } from "../../service/partners";
 import { useAuthStore } from "../../store/auth";
 import type { KitchenOrder, KitchenOrderItem } from "../../types/kitchen";
 
-function formatMoney(value?: number) {
-  return new Intl.NumberFormat("ru-RU").format(value ?? 0);
+function formatMoney(value: number | undefined, language: string) {
+  const locale =
+    language === "ru" ? "ru-RU" : language === "en" ? "en-US" : "uz-UZ";
+
+  return new Intl.NumberFormat(locale).format(value ?? 0);
 }
 
-function formatDate(value?: string) {
+function formatDate(value: string | undefined, language: string) {
   if (!value) {
     return "-";
   }
 
-  return new Date(value).toLocaleString("ru-RU", {
+  const locale =
+    language === "ru" ? "ru-RU" : language === "en" ? "en-US" : "uz-UZ";
+
+  return new Date(value).toLocaleString(locale, {
     day: "2-digit",
     month: "2-digit",
     hour: "2-digit",
@@ -67,9 +73,9 @@ function getLocalizedName(
   },
   language: string,
 ) {
-  return language === "uz"
-    ? value.name_uz || value.name_ru || ""
-    : value.name_ru || value.name_uz || "";
+  return language === "ru"
+    ? value.name_ru || value.name_uz || ""
+    : value.name_uz || value.name_ru || "";
 }
 
 function getItemName(item: KitchenOrderItem, language: string) {
@@ -145,11 +151,11 @@ function OrderHistoryCard({ order }: { order: KitchenOrder }) {
         <Group justify="space-between" align="flex-start" wrap="nowrap">
           <div style={{ flex: 1, minWidth: 0 }}>
             <Text size="xs" c="dimmed">
-              {formatDate(order.created_at)}
+              {formatDate(order.created_at, currentLanguage)}
             </Text>
           </div>
           <Badge color="dark" variant="light" size="lg">
-            {formatMoney(order.total_amount)} so'm
+            {formatMoney(order.total_amount, currentLanguage)} so'm
           </Badge>
         </Group>
 

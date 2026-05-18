@@ -13,7 +13,9 @@ const YANDEX_MAPS_SCRIPT_ID = "yandex-maps-api-script";
 const YANDEX_MAPS_API_KEY = import.meta.env.VITE_YANDEX_MAPS_API_KEY;
 
 function getPartnerLabel(partner: Partner, language: string) {
-  return language === "uz" ? partner.name_uz || partner.name_ru : partner.name_ru || partner.name_uz;
+  return language === "ru"
+    ? partner.name_ru || partner.name_uz
+    : partner.name_uz || partner.name_ru;
 }
 
 function getBounds(points: [number, number][]) {

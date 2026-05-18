@@ -25,8 +25,11 @@ import {
 } from "../../service/dashboard";
 import { useAuthStore } from "../../store/auth";
 
-function formatMoney(value: number) {
-  return new Intl.NumberFormat("ru-RU").format(value);
+function formatMoney(value: number, language: string) {
+  const locale =
+    language === "ru" ? "ru-RU" : language === "en" ? "en-US" : "uz-UZ";
+
+  return new Intl.NumberFormat(locale).format(value);
 }
 
 function getPercent(value: number, total: number) {
@@ -134,7 +137,7 @@ function formatDateParam(value: string | null) {
 }
 
 export default function DashboardPage() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const queryClient = useQueryClient();
   const company = useAuthStore((state) => state.company);
   const [selectedDateRange, setSelectedDateRange] = useState<
@@ -153,6 +156,7 @@ export default function DashboardPage() {
     endDate: endDateParam,
   });
   const partners = financialStats?.data.partners ?? [];
+  const currentLanguage = i18n.resolvedLanguage ?? i18n.language ?? "ru";
   const totals = financialStats?.data.grand_total;
   const maxRevenue = getMaxRevenue(partners);
   const maxOrders = getMaxOrders(partners);
@@ -237,20 +241,20 @@ export default function DashboardPage() {
           <SimpleGrid cols={{ base: 1, sm: 2, xl: 5 }}>
             <StatCard
               label={t("dashboard.totalRevenue")}
-              value={`${formatMoney(totals.total_revenue)} UZS`}
+              value={`${formatMoney(totals.total_revenue, currentLanguage)} UZS`}
             />
             <StatCard label={t("dashboard.totalOrders")} value={totals.total_orders} />
             <StatCard
               label={t("dashboard.cash")}
-              value={`${formatMoney(totals.total_cash)} UZS`}
+              value={`${formatMoney(totals.total_cash, currentLanguage)} UZS`}
             />
             <StatCard
               label={t("dashboard.click")}
-              value={`${formatMoney(totals.total_click)} UZS`}
+              value={`${formatMoney(totals.total_click, currentLanguage)} UZS`}
             />
             <StatCard
               label={t("dashboard.payme")}
-              value={`${formatMoney(totals.total_payme)} UZS`}
+              value={`${formatMoney(totals.total_payme, currentLanguage)} UZS`}
             />
           </SimpleGrid>
 
@@ -282,7 +286,7 @@ export default function DashboardPage() {
                   label={
                     <Stack gap={0} align="center">
                       <Text fw={700} size="xl">
-                        {formatMoney(totals.total_revenue)}
+                        {formatMoney(totals.total_revenue, currentLanguage)}
                       </Text>
                       <Text size="xs" c="dimmed">
                         {t("dashboard.uzsTotal")}
@@ -311,7 +315,7 @@ export default function DashboardPage() {
                         <Text>{section.label}</Text>
                       </Group>
                       <Stack gap={0} align="flex-end">
-                        <Text fw={600}>{formatMoney(section.value)} UZS</Text>
+                        <Text fw={600}>{formatMoney(section.value, currentLanguage)} UZS</Text>
                         <Text size="xs" c="dimmed">
                           {getPercent(section.value, totals.total_revenue)}%
                         </Text>
@@ -333,7 +337,7 @@ export default function DashboardPage() {
                   <MetricBar
                     key={partner.partner_name}
                     label={partner.partner_name}
-                    value={`${formatMoney(partner.total_amount)} UZS`}
+                    value={`${formatMoney(partner.total_amount, currentLanguage)} UZS`}
                     percent={getPercent(partner.total_amount, maxRevenue)}
                     color="linear-gradient(90deg, #f08c00 0%, #ffd43b 100%)"
                   />
@@ -397,12 +401,12 @@ export default function DashboardPage() {
                         <Text fw={700}>{partner.partner_name}</Text>
                       </Table.Td>
                       <Table.Td>{partner.order_count}</Table.Td>
-                      <Table.Td>{formatMoney(partner.cash_amount)}</Table.Td>
-                      <Table.Td>{formatMoney(partner.click_amount)}</Table.Td>
-                      <Table.Td>{formatMoney(partner.payme_amount)}</Table.Td>
+                      <Table.Td>{formatMoney(partner.cash_amount, currentLanguage)}</Table.Td>
+                      <Table.Td>{formatMoney(partner.click_amount, currentLanguage)}</Table.Td>
+                      <Table.Td>{formatMoney(partner.payme_amount, currentLanguage)}</Table.Td>
                       <Table.Td>
                         <Text fw={700}>
-                          {formatMoney(partner.total_amount)}
+                          {formatMoney(partner.total_amount, currentLanguage)}
                         </Text>
                       </Table.Td>
                     </Table.Tr>
@@ -415,16 +419,16 @@ export default function DashboardPage() {
                       <Text fw={800}>{totals.total_orders}</Text>
                     </Table.Td>
                     <Table.Td>
-                      <Text fw={800}>{formatMoney(totals.total_cash)}</Text>
+                      <Text fw={800}>{formatMoney(totals.total_cash, currentLanguage)}</Text>
                     </Table.Td>
                     <Table.Td>
-                      <Text fw={800}>{formatMoney(totals.total_click)}</Text>
+                      <Text fw={800}>{formatMoney(totals.total_click, currentLanguage)}</Text>
                     </Table.Td>
                     <Table.Td>
-                      <Text fw={800}>{formatMoney(totals.total_payme)}</Text>
+                      <Text fw={800}>{formatMoney(totals.total_payme, currentLanguage)}</Text>
                     </Table.Td>
                     <Table.Td>
-                      <Text fw={800}>{formatMoney(totals.total_revenue)}</Text>
+                      <Text fw={800}>{formatMoney(totals.total_revenue, currentLanguage)}</Text>
                     </Table.Td>
                   </Table.Tr>
                 </Table.Tbody>

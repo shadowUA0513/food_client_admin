@@ -57,13 +57,16 @@ type CheckoutType = "myself" | "partners";
 type PaymentType = "cash" | "click" | "payme" | "card";
 
 function formatPrice(value: number, language: string) {
-  const locale = language === "uz" ? "uz-UZ" : "ru-RU";
+  const locale =
+    language === "ru" ? "ru-RU" : language === "en" ? "en-US" : "uz-UZ";
 
   return `${new Intl.NumberFormat(locale).format(value)} UZS`;
 }
 
 function getProductName(product: Product, language: string) {
-  return language === "uz" ? product.name_uz : product.name_ru;
+  return language === "ru"
+    ? product.name_ru || product.name_uz
+    : product.name_uz || product.name_ru;
 }
 
 function getDiscountPercent(price: number, discountedPrice: number) {
@@ -215,9 +218,9 @@ function CheckoutModal({
     partners.find((partner) => partner.id === selectedPartnerId) ?? null;
 
   const getPartnerLabel = (partner: Partner) =>
-    currentLanguage === "uz"
-      ? partner.name_uz || partner.name_ru
-      : partner.name_ru || partner.name_uz;
+    currentLanguage === "ru"
+      ? partner.name_ru || partner.name_uz
+      : partner.name_uz || partner.name_ru;
 
   const getPaymentLabel = (value: PaymentType) => {
     switch (value) {
@@ -1180,9 +1183,9 @@ export default function CreateOrderPage() {
                   <Stack key={category.id} gap="md">
                     <div>
                       <Title order={4}>
-                        {currentLanguage === "uz"
-                          ? category.name_uz
-                          : category.name_ru}
+                        {currentLanguage === "ru"
+                          ? category.name_ru
+                          : category.name_uz}
                       </Title>
                       <Text size="sm" c="dimmed">
                         {t("createOrderPage.productCount", {

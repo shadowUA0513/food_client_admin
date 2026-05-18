@@ -121,13 +121,14 @@ export function AdminLayout() {
             <Select
               value={i18n.resolvedLanguage ?? i18n.language}
               onChange={(value) => {
-                if (value === "ru" || value === "uz") {
+                if (value === "ru" || value === "uz" || value === "en") {
                   void i18n.changeLanguage(value);
                 }
               }}
               data={[
                 { value: "ru", label: t("common.languageRu") },
                 { value: "uz", label: t("common.languageUz") },
+                { value: "en", label: t("common.languageEn") },
               ]}
               aria-label={t("common.language")}
               w={140}

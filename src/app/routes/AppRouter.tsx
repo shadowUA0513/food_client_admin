@@ -24,6 +24,7 @@ import { useAuth } from "../providers/AuthProvider";
 import { ProtectedRoute } from "./ProtectedRoute";
 import DashboardPage from "../../pages/dashboard/DashboardPage";
 import CreateOrderPage from "../../pages/orders/CreateOrderPage";
+import ProfilePage from "../../pages/profile/ProfilePage";
 import { isOperator } from "../../utils/auth";
 
 export function AppRouter() {
@@ -106,6 +107,10 @@ export function AppRouter() {
             <Route
               path="/working-hours"
               element={nonOperatorElement(<WorkingHoursPage />)}
+            />
+            <Route
+              path="/profile"
+              element={nonOperatorElement(<ProfilePage />)}
             />
             <Route
               path="/order-history"

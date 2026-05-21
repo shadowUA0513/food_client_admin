@@ -47,6 +47,7 @@
     "cash": "Cash",
     "click": "Click",
     "payme": "Payme",
+    "p2p": "P2P",
     "paymentDistribution": "Payment distribution",
     "paymentDistributionHint": "Revenue share by payment method",
     "uzsTotal": "Total UZS",
@@ -62,6 +63,7 @@
     "cashWithCurrency": "Cash (UZS)",
     "clickWithCurrency": "Click (UZS)",
     "paymeWithCurrency": "Payme (UZS)",
+    "p2pWithCurrency": "P2P (UZS)",
     "totalWithCurrency": "Total (UZS)",
     "total": "TOTAL",
     "noFinancialStatistics": "No financial statistics available."

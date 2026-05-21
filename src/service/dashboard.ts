@@ -9,6 +9,7 @@ export interface FinancialPartnerStat {
   cash_amount: number;
   click_amount: number;
   payme_amount: number;
+  p2p_amount?: number;
   total_amount: number;
 }
 
@@ -17,6 +18,7 @@ export interface FinancialGrandTotal {
   total_cash: number;
   total_click: number;
   total_payme: number;
+  total_p2p: number;
   total_revenue: number;
 }
 

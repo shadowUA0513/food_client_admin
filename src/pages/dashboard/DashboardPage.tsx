@@ -177,6 +177,11 @@ export default function DashboardPage() {
           value: totals.total_payme,
           color: "#7c3aed",
         },
+        {
+          label: t("dashboard.p2p"),
+          value: totals.total_p2p,
+          color: "#2b8a3e",
+        },
       ]
     : [];
 
@@ -238,7 +243,7 @@ export default function DashboardPage() {
         </Center>
       ) : totals ? (
         <>
-          <SimpleGrid cols={{ base: 1, sm: 2, xl: 5 }}>
+          <SimpleGrid cols={{ base: 1, sm: 2, xl: 6 }}>
             <StatCard
               label={t("dashboard.totalRevenue")}
               value={`${formatMoney(totals.total_revenue, currentLanguage)} UZS`}
@@ -255,6 +260,10 @@ export default function DashboardPage() {
             <StatCard
               label={t("dashboard.payme")}
               value={`${formatMoney(totals.total_payme, currentLanguage)} UZS`}
+            />
+            <StatCard
+              label={t("dashboard.p2p")}
+              value={`${formatMoney(totals.total_p2p, currentLanguage)} UZS`}
             />
           </SimpleGrid>
 
@@ -391,6 +400,7 @@ export default function DashboardPage() {
                     <Table.Th>{t("dashboard.cashWithCurrency")}</Table.Th>
                     <Table.Th>{t("dashboard.clickWithCurrency")}</Table.Th>
                     <Table.Th>{t("dashboard.paymeWithCurrency")}</Table.Th>
+                    <Table.Th>{t("dashboard.p2pWithCurrency")}</Table.Th>
                     <Table.Th>{t("dashboard.totalWithCurrency")}</Table.Th>
                   </Table.Tr>
                 </Table.Thead>
@@ -404,6 +414,9 @@ export default function DashboardPage() {
                       <Table.Td>{formatMoney(partner.cash_amount, currentLanguage)}</Table.Td>
                       <Table.Td>{formatMoney(partner.click_amount, currentLanguage)}</Table.Td>
                       <Table.Td>{formatMoney(partner.payme_amount, currentLanguage)}</Table.Td>
+                      <Table.Td>
+                        {formatMoney(partner.p2p_amount ?? 0, currentLanguage)}
+                      </Table.Td>
                       <Table.Td>
                         <Text fw={700}>
                           {formatMoney(partner.total_amount, currentLanguage)}
@@ -426,6 +439,9 @@ export default function DashboardPage() {
                     </Table.Td>
                     <Table.Td>
                       <Text fw={800}>{formatMoney(totals.total_payme, currentLanguage)}</Text>
+                    </Table.Td>
+                    <Table.Td>
+                      <Text fw={800}>{formatMoney(totals.total_p2p, currentLanguage)}</Text>
                     </Table.Td>
                     <Table.Td>
                       <Text fw={800}>{formatMoney(totals.total_revenue, currentLanguage)}</Text>

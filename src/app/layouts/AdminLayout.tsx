@@ -26,6 +26,7 @@ import {
   IconMoon,
   IconShoppingCartPlus,
   IconSun,
+  IconUserCircle,
   IconUsers,
 } from "@tabler/icons-react";
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
@@ -79,6 +80,11 @@ export function AdminLayout() {
           label: t("workingHours.navLabel"),
           icon: IconClockHour4,
           to: "/working-hours",
+        },
+        {
+          label: t("profilePage.navLabel"),
+          icon: IconUserCircle,
+          to: "/profile",
         },
         { label: "Kitchen", icon: IconChefHat, to: "/kitchen" },
         {

@@ -46,6 +46,7 @@
     "cash": "Наличные",
     "click": "Click",
     "payme": "Payme",
+    "p2p": "P2P",
     "paymentDistribution": "Распределение платежей",
     "paymentDistributionHint": "Доля выручки по способам оплаты",
     "uzsTotal": "всего UZS",
@@ -61,6 +62,7 @@
     "cashWithCurrency": "Наличные (UZS)",
     "clickWithCurrency": "Click (UZS)",
     "paymeWithCurrency": "Payme (UZS)",
+    "p2pWithCurrency": "P2P (UZS)",
     "totalWithCurrency": "Итого (UZS)",
     "total": "ИТОГО",
     "noFinancialStatistics": "Финансовая статистика недоступна."

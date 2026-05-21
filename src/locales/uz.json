@@ -46,6 +46,7 @@
     "cash": "Naqd",
     "click": "Click",
     "payme": "Payme",
+    "p2p": "P2P",
     "paymentDistribution": "To'lovlar taqsimoti",
     "paymentDistributionHint": "Tushumning to'lov turlari bo'yicha ulushi",
     "uzsTotal": "UZS jami",
@@ -61,6 +62,7 @@
     "cashWithCurrency": "Naqd (UZS)",
     "clickWithCurrency": "Click (UZS)",
     "paymeWithCurrency": "Payme (UZS)",
+    "p2pWithCurrency": "P2P (UZS)",
     "totalWithCurrency": "Jami (UZS)",
     "total": "JAMI",
     "noFinancialStatistics": "Moliyaviy statistika mavjud emas."

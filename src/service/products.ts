@@ -1,4 +1,9 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+  keepPreviousData,
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from "@tanstack/react-query";
 import { AxiosError } from "axios";
 import { api } from "./api";
 import { useAuthStore } from "../store/auth";
@@ -58,6 +63,7 @@ export function useProducts(
       }
     },
     enabled: Boolean(resolvedCompanyId),
+    placeholderData: keepPreviousData,
     refetchOnWindowFocus: false,
   });
 }

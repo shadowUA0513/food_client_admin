@@ -163,8 +163,8 @@ export function AdminLayout() {
       </AppShell.Header>
 
       <AppShell.Navbar p="md">
-        <Stack justify="space-between" h="100%">
-          <Stack gap="md">
+        <Stack justify="space-between" h="100%" style={{ minHeight: 0 }}>
+          <Stack gap="md" style={{ flex: 1, minHeight: 0, overflowY: "auto" }}>
             <Paper withBorder radius="xl" p="md">
               <Group wrap="nowrap">
                 <div>

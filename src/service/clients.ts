@@ -1,4 +1,4 @@
-import { useQuery } from "@tanstack/react-query";
+import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { AxiosError } from "axios";
 import { useAuthStore } from "../store/auth";
 import type { ClientsResponse } from "../types/clients";
@@ -10,15 +10,29 @@ function getErrorMessage(error: unknown, fallback: string) {
 }
 
 export function useCompanyClients(companyId?: string) {
+  return useCompanyClientsPaginated(companyId);
+}
+
+export function useCompanyClientsPaginated(
+  companyId?: string,
+  limit = 10,
+  page = 1,
+) {
   const authCompanyId = useAuthStore((state) => state.company?.id);
   const resolvedCompanyId = companyId || authCompanyId;
 
   return useQuery({
-    queryKey: ["company-clients", resolvedCompanyId],
+    queryKey: ["company-clients", resolvedCompanyId, limit, page],
     queryFn: async () => {
       try {
         const { data } = await api.get<ClientsResponse>(
           `/api/v1/company/${resolvedCompanyId}/clients`,
+          {
+            params: {
+              limit,
+              page,
+            },
+          },
         );
 
         return {
@@ -30,6 +44,7 @@ export function useCompanyClients(companyId?: string) {
       }
     },
     enabled: Boolean(resolvedCompanyId),
+    placeholderData: keepPreviousData,
     refetchOnWindowFocus: false,
   });
 }

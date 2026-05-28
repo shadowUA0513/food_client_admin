@@ -1,4 +1,9 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+  keepPreviousData,
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from "@tanstack/react-query";
 import { AxiosError } from "axios";
 import { useAuthStore } from "../store/auth";
 import type {
@@ -56,6 +61,7 @@ export function usePartners(
       }
     },
     enabled: Boolean(resolvedCompanyId),
+    placeholderData: keepPreviousData,
     refetchOnWindowFocus: false,
   });
 }

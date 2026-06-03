@@ -7,9 +7,13 @@ export interface FinancialPartnerStat {
   partner_name: string;
   order_count: number;
   cash_amount: number;
+  cash_count?: number;
   click_amount: number;
+  click_count?: number;
   payme_amount: number;
+  payme_count?: number;
   p2p_amount?: number;
+  p2p_count?: number;
   total_amount: number;
 }
 

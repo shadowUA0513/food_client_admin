@@ -17,6 +17,7 @@ import {
 import { DatePickerInput } from "@mantine/dates";
 import { IconCalendar } from "@tabler/icons-react";
 import { useQueryClient } from "@tanstack/react-query";
+import dayjs from "dayjs";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
@@ -40,12 +41,27 @@ function getPercent(value: number, total: number) {
   return Math.round((value / total) * 100);
 }
 
-function StatCard({ label, value }: { label: string; value: string | number }) {
+function StatCard({
+  label,
+  value,
+  count,
+  countLabel,
+}: {
+  label: string;
+  value: string | number;
+  count?: number;
+  countLabel?: string;
+}) {
   return (
     <Card withBorder radius="xl" p="lg">
       <Text c="dimmed" size="sm">
         {label}
       </Text>
+      {typeof count === "number" ? (
+        <Text c="dimmed" size="xs" mt={4}>
+          {countLabel ?? count}
+        </Text>
+      ) : null}
       <Title order={3} mt={8}>
         {value}
       </Title>
@@ -136,13 +152,26 @@ function formatDateParam(value: string | null) {
   return value;
 }
 
+function getDefaultDateRange() {
+  const today = dayjs();
+
+  return [
+    today.startOf("month").format("YYYY-MM-DD"),
+    today.format("YYYY-MM-DD"),
+  ] as const;
+}
+
 export default function DashboardPage() {
   const { t, i18n } = useTranslation();
   const queryClient = useQueryClient();
   const company = useAuthStore((state) => state.company);
   const [selectedDateRange, setSelectedDateRange] = useState<
     [string | null, string | null]
-  >([null, null]);
+  >(() => {
+    const [startDate, endDate] = getDefaultDateRange();
+
+    return [startDate, endDate];
+  });
   const startDateParam = formatDateParam(selectedDateRange[0]);
   const endDateParam = formatDateParam(selectedDateRange[1]);
   const {
@@ -160,6 +189,22 @@ export default function DashboardPage() {
   const totals = financialStats?.data.grand_total;
   const maxRevenue = getMaxRevenue(partners);
   const maxOrders = getMaxOrders(partners);
+  const totalCashCount = partners.reduce(
+    (sum, partner) => sum + (partner.cash_count ?? 0),
+    0,
+  );
+  const totalClickCount = partners.reduce(
+    (sum, partner) => sum + (partner.click_count ?? 0),
+    0,
+  );
+  const totalPaymeCount = partners.reduce(
+    (sum, partner) => sum + (partner.payme_count ?? 0),
+    0,
+  );
+  const totalP2pCount = partners.reduce(
+    (sum, partner) => sum + (partner.p2p_count ?? 0),
+    0,
+  );
   const paymentSections = totals
     ? [
         {
@@ -251,18 +296,26 @@ export default function DashboardPage() {
             <StatCard label={t("dashboard.totalOrders")} value={totals.total_orders} />
             <StatCard
               label={t("dashboard.cash")}
+              count={totalCashCount}
+              countLabel={t("dashboard.ordersCount", { count: totalCashCount })}
               value={`${formatMoney(totals.total_cash, currentLanguage)} UZS`}
             />
             <StatCard
               label={t("dashboard.click")}
+              count={totalClickCount}
+              countLabel={t("dashboard.ordersCount", { count: totalClickCount })}
               value={`${formatMoney(totals.total_click, currentLanguage)} UZS`}
             />
             <StatCard
               label={t("dashboard.payme")}
+              count={totalPaymeCount}
+              countLabel={t("dashboard.ordersCount", { count: totalPaymeCount })}
               value={`${formatMoney(totals.total_payme, currentLanguage)} UZS`}
             />
             <StatCard
               label={t("dashboard.p2p")}
+              count={totalP2pCount}
+              countLabel={t("dashboard.ordersCount", { count: totalP2pCount })}
               value={`${formatMoney(totals.total_p2p, currentLanguage)} UZS`}
             />
           </SimpleGrid>
@@ -323,12 +376,7 @@ export default function DashboardPage() {
                         />
                         <Text>{section.label}</Text>
                       </Group>
-                      <Stack gap={0} align="flex-end">
-                        <Text fw={600}>{formatMoney(section.value, currentLanguage)} UZS</Text>
-                        <Text size="xs" c="dimmed">
-                          {getPercent(section.value, totals.total_revenue)}%
-                        </Text>
-                      </Stack>
+                      <Text fw={600}>{formatMoney(section.value, currentLanguage)} UZS</Text>
                     </Group>
                   ))}
                 </Stack>
@@ -406,8 +454,8 @@ export default function DashboardPage() {
                 </Table.Thead>
                 <Table.Tbody>
                   {partners.map((partner) => (
-                    <Table.Tr key={`table-${partner.partner_name}`}>
-                      <Table.Td>
+                  <Table.Tr key={`table-${partner.partner_name}`}>
+                    <Table.Td>
                         <Text fw={700}>{partner.partner_name}</Text>
                       </Table.Td>
                       <Table.Td>{partner.order_count}</Table.Td>

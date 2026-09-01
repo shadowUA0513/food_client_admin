@@ -15,6 +15,7 @@ import ProductPage from "../../pages/products/ProductPage";
 import EditCategory from "../../pages/categories/EditCategory";
 import EditProduct from "../../pages/products/EditProduct";
 import LoginPage from "../../pages/login/LoginPage";
+import AiImageDashboardPage from "../../pages/ai-image-dashboard/AiImageDashboardPage";
 import AddStaff from "../../pages/staff/AddStaff";
 import EditStaff from "../../pages/staff/EditStaff";
 import StaffPage from "../../pages/staff/StaffPage";
@@ -58,6 +59,10 @@ export function AppRouter() {
                   <DashboardPage />
                 )
               }
+            />
+            <Route
+              path="/ai-image-dashboard"
+              element={nonOperatorElement(<AiImageDashboardPage />)}
             />
             <Route
               path="/partners"

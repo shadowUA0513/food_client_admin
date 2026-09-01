@@ -1,4 +1,11 @@
-import { Box, Center, Stack, Text } from "@mantine/core";
+import {
+  Box,
+  Center,
+  Stack,
+  Text,
+  useComputedColorScheme,
+  useMantineTheme,
+} from "@mantine/core";
 import { IconPhotoOff } from "@tabler/icons-react";
 import { useEffect, useState } from "react";
 import { env } from "../../service/api/env";
@@ -32,6 +39,13 @@ export function ImagePreview({
 }: ImagePreviewProps) {
   const previewUrl = getPreviewUrl(imageUrl);
   const [hasImageError, setHasImageError] = useState(false);
+  const theme = useMantineTheme();
+  const computedColorScheme = useComputedColorScheme("light");
+  const isDark = computedColorScheme === "dark";
+  const emptyBackground = isDark ? theme.colors.dark[7] : theme.white;
+  const emptyBorder = isDark ? theme.colors.dark[4] : theme.colors.gray[3];
+  const previewBorder = isDark ? theme.colors.dark[4] : theme.colors.gray[3];
+  const iconColor = isDark ? theme.colors.gray[5] : theme.colors.gray[6];
 
   useEffect(() => {
     setHasImageError(false);
@@ -45,13 +59,12 @@ export function ImagePreview({
           width: "100%",
           maxWidth,
           borderRadius: "var(--mantine-radius-md)",
-          background:
-            "linear-gradient(135deg, var(--mantine-color-gray-1), var(--mantine-color-gray-0))",
-          border: "1px dashed var(--mantine-color-gray-4)",
+          background: emptyBackground,
+          border: `1px dashed ${emptyBorder}`,
         }}
       >
         <Stack align="center" gap={6}>
-          <IconPhotoOff size={34} color="var(--mantine-color-gray-6)" />
+          <IconPhotoOff size={34} color={iconColor} />
           <Text size="sm" c="dimmed">
             {emptyLabel}
           </Text>
@@ -70,13 +83,13 @@ export function ImagePreview({
       onError={() => {
         setHasImageError(true);
       }}
-      style={{
-        objectFit: "cover",
-        display: "block",
-        maxWidth,
-        borderRadius: "var(--mantine-radius-md)",
-        border: "1px solid var(--mantine-color-gray-3)",
-      }}
-    />
+        style={{
+          objectFit: "cover",
+          display: "block",
+          maxWidth,
+          borderRadius: "var(--mantine-radius-md)",
+          border: `1px solid ${previewBorder}`,
+        }}
+      />
   );
 }

@@ -1,7 +1,6 @@
-﻿import {
+import {
   Alert,
   Button,
-  FileInput,
   Group,
   Loader,
   Modal,
@@ -17,9 +16,8 @@ import { useQueryClient } from "@tanstack/react-query";
 import { startTransition, useEffect, useState, type FormEvent } from "react";
 import { useTranslation } from "react-i18next";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
-import { ImagePreview } from "../../components/common/ImagePreview";
+import { ProductImagePanel } from "../../components/products/ProductImagePanel";
 import { useCategories } from "../../service/categories";
-import { uploadImage } from "../../service/images";
 import { useProductById, useUpdateProduct } from "../../service/products";
 import { useAuthStore } from "../../store/auth";
 import type { Product, UpdateProductPayload } from "../../types/products";
@@ -40,8 +38,6 @@ interface FormErrors {
   form?: string;
 }
 
-const MAX_IMAGE_SIZE_BYTES = 200 * 1024;
-
 const EMPTY_FORM: UpdateProductPayload = {
   company_id: "",
   category_id: "",
@@ -55,10 +51,6 @@ const EMPTY_FORM: UpdateProductPayload = {
   stock_quantity: 0,
   is_available: true,
 };
-
-function formatFileSize(bytes: number) {
-  return `${Math.ceil(bytes / 1024)} KB`;
-}
 
 export default function EditProduct() {
   const { t } = useTranslation();
@@ -79,7 +71,7 @@ export default function EditProduct() {
   const product = locationProduct ?? fetchedProduct;
   const [form, setForm] = useState<UpdateProductPayload>(EMPTY_FORM);
   const [errors, setErrors] = useState<FormErrors>({});
-  const [isUploadingImage, setIsUploadingImage] = useState(false);
+  const [isImageProcessing, setIsImageProcessing] = useState(false);
 
   const categoryOptions = (categoriesData?.categories ?? []).map(
     (category) => ({
@@ -114,68 +106,6 @@ export default function EditProduct() {
   const handleClose = () => {
     setErrors({});
     navigate("/product");
-  };
-
-  const handleImageFileChange = async (file: File | null) => {
-    if (!file) {
-      setForm((current) => ({
-        ...current,
-        image_url: "",
-      }));
-      setErrors((current) => ({
-        ...current,
-        form: undefined,
-      }));
-      return;
-    }
-
-    if (!file.type.startsWith("image/")) {
-      setErrors((current) => ({
-        ...current,
-        form: t("upload.chooseImageFile"),
-      }));
-      return;
-    }
-
-    if (file.size > MAX_IMAGE_SIZE_BYTES) {
-      setErrors((current) => ({
-        ...current,
-        form: t("upload.imageMinSize", {
-          size: formatFileSize(MAX_IMAGE_SIZE_BYTES),
-        }),
-      }));
-      return;
-    }
-
-    try {
-      setErrors((current) => ({
-        ...current,
-        form: undefined,
-      }));
-      setIsUploadingImage(true);
-      const imageUrl = await uploadImage(file);
-
-      setForm((current) => ({
-        ...current,
-        image_url: imageUrl,
-      }));
-      setErrors((current) => ({
-        ...current,
-        form: undefined,
-      }));
-    } catch (error) {
-      const message =
-        error instanceof Error
-          ? error.message
-          : "Failed to upload the selected image.";
-
-      setErrors((current) => ({
-        ...current,
-        form: message,
-      }));
-    } finally {
-      setIsUploadingImage(false);
-    }
   };
 
   const validateForm = () => {
@@ -425,29 +355,21 @@ export default function EditProduct() {
               error={errors.discounted_price}
             />
 
-            <FileInput
-              label={t("companyDetails.productImageUrl")}
-              placeholder="Choose an image"
-              accept="image/*"
-              clearable
-              onChange={handleImageFileChange}
-              description={
-                isUploadingImage
-                  ? t("upload.uploadingImage")
-                  : t("upload.imageUploadHint", {
-                      size: formatFileSize(MAX_IMAGE_SIZE_BYTES),
-                    })
-              }
-            />
-
-            <ImagePreview
+            <ProductImagePanel
+              companyId={companyId ?? undefined}
+              productId={productId ?? undefined}
               imageUrl={form.image_url}
-              alt={form.name_uz || form.name_ru || t("companyDetails.product")}
-              emptyLabel={t("upload.imageUploadHint", {
-                size: formatFileSize(MAX_IMAGE_SIZE_BYTES),
-              })}
-              height={260}
-              maxWidth={280}
+              productNameUz={form.name_uz}
+              productNameRu={form.name_ru}
+              description={form.description}
+              descriptionUz={form.description_uz}
+              onImageUrlChange={(value) => {
+                setForm((current) => ({
+                  ...current,
+                  image_url: value,
+                }));
+              }}
+              onProcessingChange={setIsImageProcessing}
             />
 
             <NumberInput
@@ -494,8 +416,8 @@ export default function EditProduct() {
               </Button>
               <Button
                 type="submit"
-                loading={updateProductMutation.isPending || isUploadingImage}
-                disabled={isUploadingImage}
+                loading={updateProductMutation.isPending || isImageProcessing}
+                disabled={isImageProcessing}
               >
                 {t("staffPage.saveButton")}
               </Button>

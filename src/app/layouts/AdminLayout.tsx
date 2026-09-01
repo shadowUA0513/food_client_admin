@@ -12,6 +12,7 @@ import {
   Stack,
   Text,
   Title,
+  UnstyledButton,
   useComputedColorScheme,
   useMantineColorScheme,
 } from "@mantine/core";
@@ -31,6 +32,7 @@ import {
 } from "@tabler/icons-react";
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
+import { useEffect, useState } from "react";
 import { useKitchenRealtime } from "../../hooks/useKitchenRealtime";
 import { useAuthStore } from "../../store/auth";
 import { useAuth } from "../providers/AuthProvider";
@@ -47,6 +49,19 @@ export function AdminLayout() {
   const computedColorScheme = useComputedColorScheme("light");
   const isDark = computedColorScheme === "dark";
   const isOperatorUser = isOperator(user?.role);
+  const dashboardPath = "/";
+  const aiImageDashboardPath = "/ai-image-dashboard";
+  const isDashboardRoute =
+    location.pathname === dashboardPath ||
+    location.pathname.startsWith(aiImageDashboardPath);
+  const [dashboardOpened, setDashboardOpened] = useState(isDashboardRoute);
+
+  useEffect(() => {
+    if (isDashboardRoute) {
+      setDashboardOpened(true);
+    }
+  }, [isDashboardRoute]);
+
   useKitchenRealtime(company?.id);
   const navigationItems = isOperatorUser
     ? [
@@ -58,7 +73,6 @@ export function AdminLayout() {
         },
       ]
     : [
-        { label: t("common.dashboard"), icon: IconLayoutDashboard, to: "/" },
         { label: t("common.partners"), icon: IconUsers, to: "/partners" },
         { label: t("common.staff"), icon: IconBriefcase, to: "/staff" },
         {
@@ -115,12 +129,25 @@ export function AdminLayout() {
               hiddenFrom="sm"
               size="sm"
             />
-            <Box>
-              <Text size="xs" tt="uppercase" fw={700} c="dimmed">
-                {t("common.appName")}
-              </Text>
-              <Title order={4}>{t("layout.controlPanel")}</Title>
-            </Box>
+            <UnstyledButton
+              onClick={() => {
+                navigate("/");
+                close();
+              }}
+              style={{
+                borderRadius: 16,
+                padding: "6px 10px",
+                transition: "background-color 150ms ease",
+              }}
+              aria-label={t("common.dashboard")}
+            >
+              <Box>
+                <Text size="xs" tt="uppercase" fw={700} c="dimmed">
+                  {t("common.appName")}
+                </Text>
+                <Title order={4}>{t("layout.controlPanel")}</Title>
+              </Box>
+            </UnstyledButton>
           </Group>
 
           <Group gap="sm">
@@ -177,34 +204,116 @@ export function AdminLayout() {
             </Paper>
 
             <Stack gap={6}>
-              {navigationItems.map((item) => {
-                const Icon = item.icon;
+              {isOperatorUser ? (
+                navigationItems.map((item) => {
+                  const Icon = item.icon;
 
-                return (
+                  return (
+                    <NavLink
+                      key={item.to}
+                      label={item.label}
+                      leftSection={<Icon size={18} />}
+                      active={
+                        item.to === "/"
+                          ? location.pathname === "/"
+                          : location.pathname.startsWith(item.to)
+                      }
+                      variant="filled"
+                      color="orange"
+                      component="button"
+                      onClick={() => {
+                        navigate(item.to);
+                        close();
+                      }}
+                      styles={{
+                        root: {
+                          borderRadius: "var(--mantine-radius-lg)",
+                        },
+                      }}
+                    />
+                  );
+                })
+              ) : (
+                <>
                   <NavLink
-                    key={item.to}
-                    label={item.label}
-                    leftSection={<Icon size={18} />}
-                    active={
-                      item.to === "/"
-                        ? location.pathname === "/"
-                        : location.pathname.startsWith(item.to)
-                    }
+                    label={t("common.dashboard")}
+                    leftSection={<IconLayoutDashboard size={18} />}
+                    active={isDashboardRoute}
+                    opened={dashboardOpened}
+                    onChange={setDashboardOpened}
                     variant="filled"
                     color="orange"
-                    component="button"
-                    onClick={() => {
-                      navigate(item.to);
-                      close();
-                    }}
+                    childrenOffset="md"
                     styles={{
                       root: {
                         borderRadius: "var(--mantine-radius-lg)",
                       },
                     }}
-                  />
-                );
-              })}
+                  >
+                    <NavLink
+                      label={t("common.dashboard")}
+                      leftSection={<IconLayoutDashboard size={18} />}
+                      active={location.pathname === dashboardPath}
+                      variant="filled"
+                      color="orange"
+                      component="button"
+                      onClick={() => {
+                        navigate(dashboardPath);
+                        close();
+                      }}
+                      styles={{
+                        root: {
+                          borderRadius: "var(--mantine-radius-lg)",
+                        },
+                      }}
+                    />
+                    <NavLink
+                      label={t("aiImageDashboard.navLabel", {
+                        defaultValue: "AI Image Dashboard",
+                      })}
+                      leftSection={<IconLayoutDashboard size={18} />}
+                      active={location.pathname.startsWith(aiImageDashboardPath)}
+                      variant="filled"
+                      color="orange"
+                      component="button"
+                      onClick={() => {
+                        navigate(aiImageDashboardPath);
+                        close();
+                      }}
+                      styles={{
+                        root: {
+                          borderRadius: "var(--mantine-radius-lg)",
+                        },
+                      }}
+                    />
+                  </NavLink>
+
+                  {navigationItems.map((item) => {
+                    const Icon = item.icon;
+
+                    return (
+                      <NavLink
+                        key={item.to}
+                        label={item.label}
+                        leftSection={<Icon size={18} />}
+                        active={location.pathname.startsWith(item.to)}
+                        variant="filled"
+                        color="orange"
+                        component="button"
+                        onClick={() => {
+                          navigate(item.to);
+                          close();
+                        }}
+                        styles={{
+                          root: {
+                            borderRadius: "var(--mantine-radius-lg)",
+                          },
+                        }}
+                      />
+                    );
+                  })}
+                </>
+              )}
             </Stack>
           </Stack>
 

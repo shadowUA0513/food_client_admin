@@ -168,7 +168,7 @@ export interface ImageGeneration {
   time: string;
   company: string;
   product_name: string;
-  status: "success" | "error";
+  status: "success" | "failed";
   duration: string;
 }
 
@@ -246,9 +246,11 @@ function normalizeGeneration(value: unknown, index: number): ImageGeneration | n
   const record = value as Record<string, unknown>;
   const rawStatus = readString(record, ["status", "state"]).toLowerCase();
   const status: ImageGeneration["status"] =
-    rawStatus === "success" || rawStatus === "successful" || rawStatus === "completed"
+    rawStatus === "success" ||
+    rawStatus === "successful" ||
+    rawStatus === "completed"
       ? "success"
-      : "error";
+      : "failed";
   const durationValue = readNumber(record, ["duration", "duration_seconds", "processing_time"]);
 
   return {

@@ -88,6 +88,7 @@ export default function AiImageDashboardPage() {
     isLoading: isUsageLoading,
     error: usageError,
   } = useImageGenerationUsage({
+    companyId,
     from: period === "custom" ? undefined : formatDate(fromDate),
     to: period === "custom" ? undefined : formatDate(today),
   });
@@ -182,7 +183,12 @@ export default function AiImageDashboardPage() {
               data={[
                 { label: t("aiImageDashboard.all"), value: "all" },
                 { label: t("aiImageDashboard.successful"), value: "success" },
-                { label: t("aiImageDashboard.errors"), value: "error" },
+                {
+                  label: t("aiImageDashboard.failed", {
+                    defaultValue: "Failed",
+                  }),
+                  value: "failed",
+                },
               ]}
               size="sm"
             />
@@ -237,7 +243,9 @@ export default function AiImageDashboardPage() {
                       >
                         {log.status === "success"
                           ? t("aiImageDashboard.successful")
-                          : t("aiImageDashboard.errors")}
+                          : t("aiImageDashboard.failed", {
+                              defaultValue: "Failed",
+                            })}
                       </Badge>
                     </Table.Td>
                   </Table.Tr>

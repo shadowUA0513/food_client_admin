@@ -3,9 +3,12 @@ import {
   Box,
   Button,
   Group,
+  Modal,
   Paper,
+  SegmentedControl,
   Stack,
   Text,
+  Textarea,
   UnstyledButton,
   useComputedColorScheme,
   useMantineTheme,
@@ -80,6 +83,12 @@ export function ProductImagePanel({
   const [isUploading, setIsUploading] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
   const [localError, setLocalError] = useState<string | null>(null);
+  const [isGenerateModalOpen, setIsGenerateModalOpen] = useState(false);
+  const [generateMode, setGenerateMode] = useState<"product" | "prompt">(
+    "product",
+  );
+  const [customPrompt, setCustomPrompt] = useState("");
+  const [isConfirmStage, setIsConfirmStage] = useState(false);
   const {
     data: remoteHistory,
     error: historyError,
@@ -167,39 +176,74 @@ export function ProductImagePanel({
     }
   };
 
+  const openGenerateModal = () => {
+    setLocalError(null);
+    setGenerateMode("product");
+    setCustomPrompt("");
+    setIsConfirmStage(false);
+    setIsGenerateModalOpen(true);
+  };
+
+  const closeGenerateModal = () => {
+    if (isGenerating) {
+      return;
+    }
+
+    setIsGenerateModalOpen(false);
+    setIsConfirmStage(false);
+  };
+
+  const handleContinueToConfirm = () => {
+    if (!companyId) {
+      setLocalError(t("companyDetails.productImageMissingCompany"));
+      return;
+    }
+
+    if (generateMode === "prompt") {
+      if (!customPrompt.trim()) {
+        setLocalError(t("companyDetails.productImagePromptRequired"));
+        return;
+      }
+    } else if (
+      !productNameUz.trim() &&
+      !productNameRu.trim() &&
+      !description.trim() &&
+      !descriptionUz.trim()
+    ) {
+      setLocalError(t("companyDetails.productImageMissingContent"));
+      return;
+    }
+
+    setLocalError(null);
+    setIsConfirmStage(true);
+  };
+
   const handleGenerateImage = async () => {
     if (!companyId) {
       setLocalError(t("companyDetails.productImageMissingCompany"));
       return;
     }
 
-    const trimmedNameUz = productNameUz.trim();
-    const trimmedNameRu = productNameRu.trim();
-    const trimmedDescription = description.trim();
-    const trimmedDescriptionUz = descriptionUz.trim();
-
-    if (
-      !trimmedNameUz &&
-      !trimmedNameRu &&
-      !trimmedDescription &&
-      !trimmedDescriptionUz
-    ) {
-      setLocalError(t("companyDetails.productImageMissingContent"));
-      return;
-    }
+    const payload =
+      generateMode === "prompt"
+        ? {
+            company_id: companyId,
+            prompt: customPrompt.trim(),
+          }
+        : {
+            company_id: companyId,
+            name_uz: productNameUz.trim(),
+            name_ru: productNameRu.trim(),
+            description: description.trim(),
+            description_uz: descriptionUz.trim(),
+          };
 
     try {
       setLocalError(null);
       setIsGenerating(true);
       const nextImageUrl = await generateProductImage(
         productId ?? draftProductIdRef.current,
-        {
-          company_id: companyId,
-          name_uz: trimmedNameUz,
-          name_ru: trimmedNameRu,
-          description: trimmedDescription,
-          description_uz: trimmedDescriptionUz,
-        },
+        payload,
       );
 
       if (imageUrl.trim() && imageUrl.trim() !== nextImageUrl) {
@@ -207,6 +251,8 @@ export function ProductImagePanel({
       }
 
       onImageUrlChange(nextImageUrl);
+      setIsGenerateModalOpen(false);
+      setIsConfirmStage(false);
     } catch (error) {
       setLocalError(
         error instanceof Error
@@ -226,6 +272,7 @@ export function ProductImagePanel({
     productNameUz || productNameRu || t("companyDetails.product");
 
   return (
+    <>
     <Paper
       withBorder
       radius="xl"
@@ -263,12 +310,11 @@ export function ProductImagePanel({
             {t("companyDetails.productImageUploadButton")}
           </Button>
           <Button
-            variant="light"
+            variant="gradient"
+            gradient={{ from: "indigo", to: "grape", deg: 45 }}
             leftSection={<IconSparkles size={16} />}
-            onClick={() => {
-              void handleGenerateImage();
-            }}
-            loading={isGenerating}
+            onClick={openGenerateModal}
+            style={{ boxShadow: "0 4px 14px rgba(121, 80, 242, 0.35)" }}
           >
             {t("companyDetails.productImageGenerateButton")}
           </Button>
@@ -352,5 +398,111 @@ export function ProductImagePanel({
         </Box>
       </Stack>
     </Paper>
+
+    <Modal
+      opened={isGenerateModalOpen}
+      onClose={closeGenerateModal}
+      title={t("companyDetails.productImageGenerateModalTitle")}
+      centered
+      size="lg"
+      radius="lg"
+      closeOnClickOutside={!isGenerating}
+      closeOnEscape={!isGenerating}
+      withCloseButton={!isGenerating}
+    >
+      {isConfirmStage ? (
+        <Stack gap="lg" py="xs">
+          <Text size="sm" c="dimmed">
+            {t("companyDetails.productImageGenerateConfirmMessage")}
+          </Text>
+
+          {localError ? (
+            <Alert color="red" variant="light">
+              {localError}
+            </Alert>
+          ) : null}
+
+          <Group justify="flex-end" gap="sm">
+            <Button
+              variant="default"
+              onClick={() => setIsConfirmStage(false)}
+              disabled={isGenerating}
+            >
+              {t("companyDetails.productImageGenerateCancelButton")}
+            </Button>
+            <Button
+              variant="gradient"
+              gradient={{ from: "indigo", to: "grape", deg: 45 }}
+              leftSection={<IconSparkles size={16} />}
+              onClick={() => {
+                void handleGenerateImage();
+              }}
+              loading={isGenerating}
+            >
+              {t("companyDetails.productImageGenerateConfirmButton")}
+            </Button>
+          </Group>
+        </Stack>
+      ) : (
+        <Stack gap="lg" py="xs">
+          <SegmentedControl
+            fullWidth
+            value={generateMode}
+            onChange={(value) =>
+              setGenerateMode(value as "product" | "prompt")
+            }
+            data={[
+              {
+                label: t("companyDetails.productImageModeProduct"),
+                value: "product",
+              },
+              {
+                label: t("companyDetails.productImageModePrompt"),
+                value: "prompt",
+              },
+            ]}
+          />
+
+          {generateMode === "prompt" ? (
+            <Textarea
+              label={t("companyDetails.productImagePromptLabel")}
+              placeholder={t("companyDetails.productImagePromptPlaceholder")}
+              value={customPrompt}
+              onChange={(event) =>
+                setCustomPrompt(event.currentTarget.value)
+              }
+              autosize
+              minRows={6}
+              maxRows={12}
+              size="md"
+            />
+          ) : (
+            <Text size="sm" c="dimmed">
+              {t("companyDetails.productImagePanelHint")}
+            </Text>
+          )}
+
+          {localError ? (
+            <Alert color="red" variant="light">
+              {localError}
+            </Alert>
+          ) : null}
+
+          <Group justify="flex-end" gap="sm">
+            <Button variant="default" onClick={closeGenerateModal}>
+              {t("companyDetails.productImageGenerateCancelButton")}
+            </Button>
+            <Button
+              variant="gradient"
+              gradient={{ from: "indigo", to: "grape", deg: 45 }}
+              onClick={handleContinueToConfirm}
+            >
+              {t("companyDetails.productImageContinueButton")}
+            </Button>
+          </Group>
+        </Stack>
+      )}
+    </Modal>
+    </>
   );
 }

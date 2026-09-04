@@ -168,7 +168,7 @@ export interface ImageGeneration {
   time: string;
   company: string;
   product_name: string;
-  status: "success" | "error";
+  status: "success" | "failed";
   duration: string;
 }
 
@@ -246,9 +246,11 @@ function normalizeGeneration(value: unknown, index: number): ImageGeneration | n
   const record = value as Record<string, unknown>;
   const rawStatus = readString(record, ["status", "state"]).toLowerCase();
   const status: ImageGeneration["status"] =
-    rawStatus === "success" || rawStatus === "successful" || rawStatus === "completed"
+    rawStatus === "success" ||
+    rawStatus === "successful" ||
+    rawStatus === "completed"
       ? "success"
-      : "error";
+      : "failed";
   const durationValue = readNumber(record, ["duration", "duration_seconds", "processing_time"]);
 
   return {
@@ -367,14 +369,34 @@ function normalizeUsage(payload: unknown): ImageGenerationUsage {
   };
 }
 
-export function useImageGenerationUsage(params: { from?: string; to?: string } = {}) {
+export function useImageGenerationUsage(
+  params: { companyId?: string; from?: string; to?: string } = {},
+) {
+  const authCompanyId = useAuthStore((state) => state.company?.id);
+  const companyId = params.companyId || authCompanyId;
+
   return useQuery({
-    queryKey: ["image-generation-usage", params.from ?? null, params.to ?? null],
+    queryKey: [
+      "image-generation-usage",
+      companyId ?? null,
+      params.from ?? null,
+      params.to ?? null,
+    ],
     queryFn: async () => {
+      if (!companyId) {
+        throw new Error("Company ID is required.");
+      }
+
       try {
         const { data } = await api.get<unknown>(
           "/api/v1/company/image-generations/usage",
-          { params: { from: params.from, to: params.to } },
+          {
+            params: {
+              from: params.from,
+              to: params.to,
+              company_id: companyId,
+            },
+          },
         );
 
         return normalizeUsage(data);
@@ -382,7 +404,7 @@ export function useImageGenerationUsage(params: { from?: string; to?: string } =
         throw new Error(getErrorMessage(error, "Failed to load image generation usage."));
       }
     },
-    enabled: Boolean(params.from && params.to),
+    enabled: Boolean(companyId && params.from && params.to),
     refetchOnWindowFocus: false,
   });
 }

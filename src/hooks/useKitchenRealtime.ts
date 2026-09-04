@@ -1,10 +1,17 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { useEffect, useEffectEvent, useRef } from "react";
+import i18n from "../i18n";
 import { AUTH_COOKIE_KEY } from "../service/api/constant";
 import { env } from "../service/api/env";
 import { fetchKitchenOrders } from "../service/kitchen";
 import type { KitchenOrder, KitchenPartnerGroup } from "../types/kitchen";
 import { showSuccessNotification } from "../utils/notifications";
+
+const SPEECH_LANGUAGE_BY_LOCALE: Record<string, string> = {
+  ru: "ru-RU",
+  en: "en-US",
+  uz: "uz-UZ",
+};
 
 function getCookie(name: string) {
   const escapedName = name.replace(/[.*+\-?^${}()|[\]\\]/g, "\\$&");
@@ -93,18 +100,91 @@ function playKitchenAlertSound() {
   }, 1600);
 }
 
-function speakKitchenAlert(message: string) {
+let cachedVoicesPromise: Promise<SpeechSynthesisVoice[]> | null = null;
 
+function loadSpeechVoices(): Promise<SpeechSynthesisVoice[]> {
+  const existingVoices = window.speechSynthesis.getVoices();
+  if (existingVoices.length > 0) {
+    return Promise.resolve(existingVoices);
+  }
+
+  if (cachedVoicesPromise) {
+    return cachedVoicesPromise;
+  }
+
+  cachedVoicesPromise = new Promise((resolve) => {
+    const handleVoicesChanged = () => {
+      window.speechSynthesis.removeEventListener(
+        "voiceschanged",
+        handleVoicesChanged,
+      );
+      resolve(window.speechSynthesis.getVoices());
+    };
+
+    window.speechSynthesis.addEventListener(
+      "voiceschanged",
+      handleVoicesChanged,
+    );
+
+    window.setTimeout(() => {
+      window.speechSynthesis.removeEventListener(
+        "voiceschanged",
+        handleVoicesChanged,
+      );
+      resolve(window.speechSynthesis.getVoices());
+    }, 1000);
+  });
+
+  return cachedVoicesPromise;
+}
+
+// Local SAPI voices (e.g. Microsoft David/Zira) sound choppy; prefer
+// higher-quality online/neural voices when the browser exposes them.
+const PREFERRED_VOICE_NAME_PATTERNS = [/neural/i, /natural/i, /online/i, /google/i];
+
+function pickBestVoice(voices: SpeechSynthesisVoice[], langCode: string) {
+  const languagePrefix = langCode.split("-")[0].toLowerCase();
+  const matchingVoices = voices.filter((voice) =>
+    voice.lang.toLowerCase().startsWith(languagePrefix),
+  );
+
+  if (matchingVoices.length === 0) {
+    return null;
+  }
+
+  for (const pattern of PREFERRED_VOICE_NAME_PATTERNS) {
+    const preferredVoice = matchingVoices.find((voice) =>
+      pattern.test(voice.name),
+    );
+    if (preferredVoice) {
+      return preferredVoice;
+    }
+  }
+
+  return (
+    matchingVoices.find((voice) => !voice.localService) ?? matchingVoices[0]
+  );
+}
+
+async function speakKitchenAlert(message: string, language: string) {
   if (typeof window === "undefined" || !("speechSynthesis" in window)) {
     return;
   }
 
   window.speechSynthesis.cancel();
 
+  const langCode =
+    SPEECH_LANGUAGE_BY_LOCALE[language] ?? SPEECH_LANGUAGE_BY_LOCALE.ru;
+  const voices = await loadSpeechVoices();
+  const bestVoice = pickBestVoice(voices, langCode);
+
   const utterance = new SpeechSynthesisUtterance(message);
-  utterance.lang = "ru-RU";
+  utterance.lang = langCode;
+  if (bestVoice) {
+    utterance.voice = bestVoice;
+  }
   utterance.volume = 1;
-  utterance.rate = 0.82;
+  utterance.rate = 1;
   utterance.pitch = 1;
 
   window.speechSynthesis.speak(utterance);
@@ -162,8 +242,8 @@ export function useKitchenRealtime(companyId?: string) {
   const hasPendingSyncRef = useRef(false);
 
   const notifyKitchenUpdate = useEffectEvent(() => {
-    const title = "Новый заказ";
-    const message = "На кухню поступил новый заказ.";
+    const title = i18n.t("kitchenPage.newOrderTitle");
+    const message = i18n.t("kitchenPage.newOrderMessage");
 
     showSuccessNotification({
       title,
@@ -171,7 +251,7 @@ export function useKitchenRealtime(companyId?: string) {
     });
     showBrowserNotification(title, message);
     playKitchenAlertSound();
-    speakKitchenAlert(message);
+    void speakKitchenAlert(message, i18n.language);
   });
 
   const syncKitchenOrders = useEffectEvent(async (shouldNotify: boolean) => {

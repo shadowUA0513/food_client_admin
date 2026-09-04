@@ -148,7 +148,9 @@
     "closeError": "Failed to close the order.",
     "partnerNotFound": "Partner not found.",
     "goToPartners": "Go to partners",
-    "noOrders": "No orders for this partner."
+    "noOrders": "No orders for this partner.",
+    "newOrderTitle": "New order",
+    "newOrderMessage": "A new order has arrived in the kitchen."
   },
   "staffPage": {
     "title": "Staff",

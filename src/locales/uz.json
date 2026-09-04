@@ -147,7 +147,9 @@
     "closeError": "Buyurtmani yopib bo'lmadi.",
     "partnerNotFound": "Hamkor topilmadi.",
     "goToPartners": "Hamkorlarga o'tish",
-    "noOrders": "Bu hamkor uchun buyurtmalar yo'q."
+    "noOrders": "Bu hamkor uchun buyurtmalar yo'q.",
+    "newOrderTitle": "Yangi buyurtma",
+    "newOrderMessage": "Oshxonaga yangi buyurtma tushdi."
   },
   "staffPage": {
     "title": "Xodimlar",

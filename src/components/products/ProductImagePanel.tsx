@@ -263,12 +263,14 @@ export function ProductImagePanel({
             {t("companyDetails.productImageUploadButton")}
           </Button>
           <Button
-            variant="light"
+            variant="gradient"
+            gradient={{ from: "indigo", to: "grape", deg: 45 }}
             leftSection={<IconSparkles size={16} />}
             onClick={() => {
               void handleGenerateImage();
             }}
             loading={isGenerating}
+            style={{ boxShadow: "0 4px 14px rgba(121, 80, 242, 0.35)" }}
           >
             {t("companyDetails.productImageGenerateButton")}
           </Button>

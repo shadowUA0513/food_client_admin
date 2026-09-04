@@ -88,6 +88,7 @@ export default function AiImageDashboardPage() {
     isLoading: isUsageLoading,
     error: usageError,
   } = useImageGenerationUsage({
+    companyId,
     from: period === "custom" ? undefined : formatDate(fromDate),
     to: period === "custom" ? undefined : formatDate(today),
   });

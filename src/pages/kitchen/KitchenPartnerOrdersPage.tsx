@@ -33,6 +33,7 @@ import {
   useCancelKitchenOrder,
   useEditKitchenOrder,
   useKitchenOrders,
+  useReviewKitchenOrderFraud,
   useUpdateKitchenOrderStatus,
 } from "../../service/kitchen";
 import { useProducts } from "../../service/products";
@@ -161,6 +162,48 @@ function getTranslatedPaymentType(
     default:
       return paymentType || "";
   }
+}
+
+function getFraudBadgeColor(status: string) {
+  switch (status) {
+    case "flagged":
+      return "red";
+    case "suspicious":
+      return "yellow";
+    case "auto_verified":
+      return "green";
+    default:
+      return "gray";
+  }
+}
+
+function getTranslatedFraudStatus(t: (key: string) => string, status: string) {
+  switch (status) {
+    case "flagged":
+      return t("kitchenPage.fraudStatusFlagged");
+    case "suspicious":
+      return t("kitchenPage.fraudStatusSuspicious");
+    case "auto_verified":
+      return t("kitchenPage.fraudStatusAutoVerified");
+    case "pending":
+      return t("kitchenPage.fraudStatusPending");
+    default:
+      return status;
+  }
+}
+
+// Fraud check only ever runs for card (P2P) payments -- cash/click/payme
+// orders never get a payment_verification_status worth showing or gating on.
+function isCardPayment(order: KitchenOrder) {
+  return (order.payment_type || "").toLowerCase() === "card";
+}
+
+function needsFraudReviewBeforeClosing(order: KitchenOrder) {
+  return (
+    isCardPayment(order) &&
+    (order.payment_verification_status === "suspicious" ||
+      order.payment_verification_status === "flagged")
+  );
 }
 
 function createOrderEditForm(order: KitchenOrder): EditOrderForm {
@@ -453,6 +496,35 @@ function OrderCard({
           >
             {getTranslatedPaymentStatus(t, order.payment_status)}
           </Badge>
+          {isCardPayment(order) &&
+          order.payment_verification_status &&
+          order.payment_verification_status !== "pending" ? (
+            <Badge
+              variant="light"
+              color={getFraudBadgeColor(order.payment_verification_status)}
+              styles={{
+                root: {
+                  whiteSpace: "nowrap",
+                  height: "auto",
+                  minHeight: 26,
+                  display: "inline-flex",
+                  alignItems: "center",
+                  overflow: "visible",
+                  paddingTop: 3,
+                  paddingBottom: 3,
+                },
+                label: {
+                  lineHeight: 1.2,
+                  overflow: "visible",
+                },
+              }}
+            >
+              {getTranslatedFraudStatus(t, order.payment_verification_status)}
+              {typeof order.fraud_score === "number"
+                ? ` (${order.fraud_score.toFixed(2)})`
+                : ""}
+            </Badge>
+          ) : null}
         </Group>
 
         <Stack mt="auto" gap="xs">
@@ -530,8 +602,14 @@ export default function KitchenPartnerOrdersPage() {
   const updateOrderStatusMutation = useUpdateKitchenOrderStatus();
   const cancelOrderMutation = useCancelKitchenOrder();
   const editOrderMutation = useEditKitchenOrder();
+  const reviewFraudMutation = useReviewKitchenOrderFraud();
   const [editingOrder, setEditingOrder] = useState<KitchenOrder | null>(null);
   const [orderToCancel, setOrderToCancel] = useState<KitchenOrder | null>(null);
+  const [orderForFraudReview, setOrderForFraudReview] =
+    useState<KitchenOrder | null>(null);
+  const [fraudReviewDecision, setFraudReviewDecision] = useState<
+    "fraud" | "legit" | null
+  >(null);
   const [editForm, setEditForm] = useState<EditOrderForm | null>(null);
   const [editError, setEditError] = useState<string | null>(null);
   const currentLanguage = i18n.resolvedLanguage ?? i18n.language ?? "ru";
@@ -611,6 +689,59 @@ export default function KitchenPartnerOrdersPage() {
             ? cancelError.message
             : t("kitchenPage.cancelError"),
       });
+    }
+  };
+
+  const requestCloseOrder = (order: KitchenOrder) => {
+    if (needsFraudReviewBeforeClosing(order)) {
+      setOrderForFraudReview(order);
+      return;
+    }
+
+    void handleCloseOrder(order);
+  };
+
+  const recordFraudReview = async (
+    order: KitchenOrder,
+    outcome: "fraud" | "legit",
+  ) => {
+    try {
+      await reviewFraudMutation.mutateAsync({
+        companyId: company?.id,
+        orderId: order.id,
+        outcome,
+      });
+    } catch (reviewError) {
+      // Best-effort: staff's close/cancel decision still goes through even
+      // if recording the review outcome fails (e.g. fraud service down).
+      showErrorNotification({
+        message:
+          reviewError instanceof Error
+            ? reviewError.message
+            : t("kitchenPage.fraudReviewError"),
+      });
+    }
+  };
+
+  const handleConfirmGenuineAndClose = async (order: KitchenOrder) => {
+    setFraudReviewDecision("legit");
+    try {
+      await recordFraudReview(order, "legit");
+      setOrderForFraudReview(null);
+      await handleCloseOrder(order);
+    } finally {
+      setFraudReviewDecision(null);
+    }
+  };
+
+  const handleConfirmFraudAndCancel = async (order: KitchenOrder) => {
+    setFraudReviewDecision("fraud");
+    try {
+      await recordFraudReview(order, "fraud");
+      setOrderForFraudReview(null);
+      await handleCancelOrder(order);
+    } finally {
+      setFraudReviewDecision(null);
     }
   };
 
@@ -870,9 +1001,7 @@ export default function KitchenPartnerOrdersPage() {
                   editLabel={t("kitchenPage.editOrder")}
                   cancelLabel={t("kitchenPage.cancelOrder")}
                   cancelledLabel={t("kitchenPage.cancelledOrder")}
-                  onCloseOrder={(currentOrder) => {
-                    void handleCloseOrder(currentOrder);
-                  }}
+                  onCloseOrder={requestCloseOrder}
                   onEditOrder={openEditModal}
                   onCancelOrder={(currentOrder) => {
                     openCancelModal(currentOrder);
@@ -1103,6 +1232,68 @@ export default function KitchenPartnerOrdersPage() {
             </Button>
           </Group>
         </Stack>
+      </Modal>
+
+      <Modal
+        opened={Boolean(orderForFraudReview)}
+        onClose={() => {
+          if (!fraudReviewDecision) {
+            setOrderForFraudReview(null);
+          }
+        }}
+        title={t("kitchenPage.fraudReviewTitle")}
+        centered
+      >
+        {orderForFraudReview ? (
+          <Stack gap="md">
+            <Alert
+              color={getFraudBadgeColor(
+                orderForFraudReview.payment_verification_status || "",
+              )}
+              variant="light"
+            >
+              {getTranslatedFraudStatus(
+                t,
+                orderForFraudReview.payment_verification_status || "",
+              )}
+              {typeof orderForFraudReview.fraud_score === "number"
+                ? ` (${orderForFraudReview.fraud_score.toFixed(2)})`
+                : ""}
+            </Alert>
+            <Text>{t("kitchenPage.fraudReviewMessage")}</Text>
+            <Group justify="flex-end" wrap="wrap">
+              <Button
+                variant="default"
+                onClick={() => {
+                  setOrderForFraudReview(null);
+                }}
+                disabled={Boolean(fraudReviewDecision)}
+              >
+                {t("staffPage.cancel")}
+              </Button>
+              <Button
+                color="red"
+                loading={fraudReviewDecision === "fraud"}
+                disabled={Boolean(fraudReviewDecision)}
+                onClick={() => {
+                  void handleConfirmFraudAndCancel(orderForFraudReview);
+                }}
+              >
+                {t("kitchenPage.fraudReviewConfirmFraud")}
+              </Button>
+              <Button
+                color="green"
+                loading={fraudReviewDecision === "legit"}
+                disabled={Boolean(fraudReviewDecision)}
+                onClick={() => {
+                  void handleConfirmGenuineAndClose(orderForFraudReview);
+                }}
+              >
+                {t("kitchenPage.fraudReviewConfirmGenuine")}
+              </Button>
+            </Group>
+          </Stack>
+        ) : null}
       </Modal>
     </>
   );

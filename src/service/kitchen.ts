@@ -119,6 +119,35 @@ export function useCancelKitchenOrder() {
   });
 }
 
+type ReviewKitchenOrderFraudPayload = {
+  companyId?: string;
+  orderId: string;
+  outcome: "fraud" | "legit";
+};
+
+export function useReviewKitchenOrderFraud() {
+  return useMutation<void, Error, ReviewKitchenOrderFraudPayload>({
+    mutationFn: async ({ companyId, orderId, outcome }) => {
+      const resolvedCompanyId = companyId || useAuthStore.getState().company?.id;
+
+      if (!resolvedCompanyId) {
+        throw new Error("Company ID is required.");
+      }
+
+      try {
+        await api.patch(
+          `/api/v1/company/${resolvedCompanyId}/order/${orderId}/fraud-review`,
+          { outcome },
+        );
+      } catch (error) {
+        throw new Error(
+          getErrorMessage(error, "Failed to record fraud review outcome."),
+        );
+      }
+    },
+  });
+}
+
 type EditKitchenOrderPayload = {
   companyId?: string;
   orderId: string;

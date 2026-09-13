@@ -133,6 +133,34 @@ function getTranslatedPaymentType(
   }
 }
 
+function getFraudBadgeColor(status: string) {
+  switch (status) {
+    case "flagged":
+      return "red";
+    case "suspicious":
+      return "yellow";
+    case "auto_verified":
+      return "green";
+    default:
+      return "gray";
+  }
+}
+
+function getTranslatedFraudStatus(t: (key: string) => string, status: string) {
+  switch (status) {
+    case "flagged":
+      return t("kitchenPage.fraudStatusFlagged");
+    case "suspicious":
+      return t("kitchenPage.fraudStatusSuspicious");
+    case "auto_verified":
+      return t("kitchenPage.fraudStatusAutoVerified");
+    case "pending":
+      return t("kitchenPage.fraudStatusPending");
+    default:
+      return status;
+  }
+}
+
 function OrderHistoryCard({ order }: { order: KitchenOrder }) {
   const { t, i18n } = useTranslation();
   const currentLanguage = i18n.resolvedLanguage ?? i18n.language ?? "ru";
@@ -223,6 +251,18 @@ function OrderHistoryCard({ order }: { order: KitchenOrder }) {
             {order.payment_type ? (
               <Badge variant="light" color="orange">
                 {getTranslatedPaymentType(t, order.payment_type)}
+              </Badge>
+            ) : null}
+            {order.payment_verification_status &&
+            order.payment_verification_status !== "pending" ? (
+              <Badge
+                variant="light"
+                color={getFraudBadgeColor(order.payment_verification_status)}
+              >
+                {getTranslatedFraudStatus(t, order.payment_verification_status)}
+                {typeof order.fraud_score === "number"
+                  ? ` (${order.fraud_score.toFixed(2)})`
+                  : ""}
               </Badge>
             ) : null}
           </Group>
